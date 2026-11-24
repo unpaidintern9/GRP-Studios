@@ -138,3 +138,7 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 
 ### V05 cinematic repair
 - Owner rejected V04 rendered PNG package as visually inadequate. V04 verified native depth but is not an animation. Read the existing production skills and Blender guidance; added [cinematic title finishing](../.agents/skills/cinematic-title-finishing/SKILL.md). [V05 motion proof](gold-light-v05-motion.md) changes reflection lighting, contour construction, wordmark exposure and continuous camera cadence, then verifies 120 genuine frames at 24fps. Source only until native build and render pass; M3 ACTIVE. Retain previous creative exclusions pending explicit owner change.
+
+
+### V06 reference reconstruction
+- V05 real native L40S OptiX 120-frame proof completed, three private artifacts verified and GPU terminated. Owner rejected its camera motion, depth and background. Twelve timestamp comparison confirms hard blue room horizon, rippled edges, weak macro choreography, missing traveling lights and closing environment. [V06 candidate](gold-light-v06-reconstruction.md) adds scene-specific contour raster parity and new stage/camera/lighting construction. Source only; do not mark M3 complete or re-rent GPU without authorization. Earth/tagline conflict with active brief requires owner resolution.
