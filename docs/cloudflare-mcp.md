@@ -41,3 +41,6 @@ See [M2 acceptance evidence](evidence/m2-runtime-2026-11-24.md). Run 45438147120
 
 ## Authorized provisioning checkpoint
 See [live resource evidence](evidence/cloudflare-provisioning-2026-11-24.md). R2, D1 and both queues now exist; live migration passed and original logos are verified in private R2. Earlier proposed/not-created labels are historical. Worker, container, authenticated team access and queue bindings are still pending. No public route or active consumer.
+
+## Private render service candidate
+See [private render service](private-render-service.md). A separate Wrangler config binds only the dedicated R2 and singleton container. Render admission disabled, routes disabled, no queues attached. Manual source-only packaging workflow must pass before deployment. Team OAuth remains outstanding.

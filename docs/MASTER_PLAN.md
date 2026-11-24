@@ -69,6 +69,10 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - M8 ACTIVE in parallel with M3. Worker and render container NOT DEPLOYED; OAuth, private job execution and actual cinematic render outstanding. No recurring compute or plan upgrade. Billing scope unavailable.
 - Next: package verified renderer as an isolated, bounded service and produce a deployable MCP bundle; execute four private keyframes after secure render path is operational.
 
+### Private cloud renderer implementation checkpoint
+- Fixed review runner, dedicated source-only image recipe, singleton DO admission and private R2 execution candidate, separate Wrangler config and manual packaging workflow added. Rendering disabled; no deployed Worker, container, queued messages or billing changes. 17 fixed-contract assertions passed against the exact shared contract source in a JS runtime. Native Worker bundle, Docker image and remote exec lifecycle NOT RUN.
+- Next: run source-only package validation, establish authorized image publication and deploy with rendering disabled, verify private operator access and cleanup, then authorize and execute one bounded four-keyframe job. See [private render service](private-render-service.md). Do not rerun generic M2 smoke or publish proprietary render artifacts.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 

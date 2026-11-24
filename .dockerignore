@@ -2,3 +2,14 @@
 !infrastructure/
 !infrastructure/blender/
 !infrastructure/blender/Dockerfile
+!infrastructure/blender/Dockerfile.service
+!engine/
+!engine/brand/
+!engine/brand/trace_logo.mjs
+!engine/brand/prepare_gold_light.mjs
+!engine/motion/
+!engine/motion/gold_light_v02.py
+!plugins/
+!plugins/blender/
+!plugins/blender/review-contract.mjs
+!plugins/blender/review-runner.mjs

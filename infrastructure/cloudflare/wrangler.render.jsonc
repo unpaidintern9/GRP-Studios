@@ -1,0 +1,55 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "grp-studios-mcp",
+  "main": "review-worker.mjs",
+  "compatibility_date": "2026-11-24",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "STUDIO_RENDER_ENABLED": "false"
+  },
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "grp-studios-media"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "REVIEW_RENDERER",
+        "class_name": "GoldLightRenderer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "review-v1",
+      "new_sqlite_classes": [
+        "GoldLightRenderer"
+      ]
+    }
+  ],
+  "containers": [
+    {
+      "name": "grp-studios-render-worker",
+      "class_name": "GoldLightRenderer",
+      "scheduling_policy": "default",
+      "image": "../blender/Dockerfile.service",
+      "image_build_context": "../..",
+      "max_instances": 1,
+      "instance_type": "standard-4",
+      "observability": {
+        "logs": {
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

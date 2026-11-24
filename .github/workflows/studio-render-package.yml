@@ -1,0 +1,41 @@
+name: GRP Studios - render package validation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: grp-studios-render-package
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - name: Validate Worker candidate without deployment
+        run: npx wrangler deploy --dry-run --config infrastructure/cloudflare/wrangler.render.jsonc --outdir dist/render-worker
+      - name: Build renderer service image locally
+        run: docker build --platform linux/amd64 -f infrastructure/blender/Dockerfile.service -t grp-studios-render-worker:validation .
+      - name: Confirm rejection before Blender or private filesystem changes
+        run: |
+          if printf '%s' '{"template":"invalid","assets":[]}' | docker run --rm --network none -i --entrypoint /usr/local/bin/node grp-studios-render-worker:validation /opt/studio/plugins/blender/review-runner.mjs; then
+            echo "Unexpected admission"; exit 1
+          fi
+          docker run --rm --network none --entrypoint /opt/blender/blender grp-studios-render-worker:validation --version
+      - name: Upload source-only build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: grp-studios-render-package-${{ github.sha }}
+          path: |
+            dist/render-worker/
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 3
