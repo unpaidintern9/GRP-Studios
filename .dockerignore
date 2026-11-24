@@ -22,3 +22,4 @@
 !engine/motion/gold_light_v03_post.py
 !scripts/
 !scripts/gpu_batch_transfer.py
+!engine/motion/gold_light_v04.py

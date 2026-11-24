@@ -22,7 +22,7 @@ export class OnDemandGoldLightRenderer extends DurableObject {
   if(op==="cancel"){const s=await this.#state();if(s?.state!=="running")return this.status();await this.#finish({state:"cancelled",detail:"Operator cancellation"});if(await this.#stop())await this.ctx.storage.deleteAlarm();return this.status()}
   if(this.env.STUDIO_QUEUE_RENDER_ENABLED!=="true")throw Error("Queue render disabled");
   const permit=await this.env.MEDIA.get(keys.permit);if(!permit||!permitValid(await permit.json(),body.nonce,Date.now(),template))throw Error("Missing or expired private permit");
-  const claimed=await this.ctx.storage.transaction(async tx=>{if(await tx.get("review-v3"))return false;await tx.put("review-v3",{id:template===V03_TEMPLATE?V03_TEMPLATE:JOB_KEY,template,state:"running",createdAt:now(),deadline:Date.now()+JOB_TIMEOUT_MS});return true});if(!claimed)return this.status();
+  const claimed=await this.ctx.storage.transaction(async tx=>{if(await tx.get("review-v3"))return false;await tx.put("review-v3",{id:template===TEMPLATE?JOB_KEY:template,template,state:"running",createdAt:now(),deadline:Date.now()+JOB_TIMEOUT_MS});return true});if(!claimed)return this.status();
   try{await this.ctx.storage.setAlarm(Date.now()+JOB_TIMEOUT_MS);await this.#receipt(keys.status,await this.#state())}catch(e){await this.#finish({state:"failed",detail:"Safety setup failed"});throw e}
   // Await from the queue invocation rather than relying on waitUntil to keep a long render alive.
   const abort=new AbortController();const timer=setTimeout(()=>abort.abort(),JOB_TIMEOUT_MS-1000);let next={state:"failed",detail:"Render did not complete"};
