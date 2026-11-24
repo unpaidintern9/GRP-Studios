@@ -1,5 +1,6 @@
 // One fixed private lookdev job. Not a general remote execution interface.
 export const TEMPLATE="gold-light-v02-review-v1";
+export const CLIP_TEMPLATE="gold-light-v02-clip-v1";
 export const FRAMES=Object.freeze([18,36,76,114]);
 export const INPUTS=Object.freeze([
   {
@@ -21,7 +22,7 @@ export const JOB_TIMEOUT_MS=600000;
 export const JOB_KEY="gold-light-v02-review-v1";
 export const OUTPUT_KEY="reviews/"+JOB_KEY+"/lookdev.zip";
 export function validateEnvelope(payload) {
- if(!payload||Object.getPrototypeOf(payload)!==Object.prototype||Object.keys(payload).sort().join(",")!=="assets,template"||payload.template!==TEMPLATE) throw Error("Invalid fixed review template");
+ if(!payload||Object.getPrototypeOf(payload)!==Object.prototype||Object.keys(payload).sort().join(",")!=="assets,template"||![TEMPLATE,CLIP_TEMPLATE].includes(payload.template)) throw Error("Invalid fixed review template");
  if(!Array.isArray(payload.assets)||payload.assets.length!==INPUTS.length)throw Error("Expected two inputs");
  for(let i=0;i<INPUTS.length;i++){
   const v=payload.assets[i],expected=INPUTS[i];
@@ -36,3 +37,5 @@ export function validReceipt(r) {
  Array.isArray(r.resolution)&&r.resolution.join(",")==="1920,1080"&&Array.isArray(r.keyframes)&&r.keyframes.length===FRAMES.length&&
  r.keyframes.every((x,i)=>x.frame===FRAMES[i]&&x.file==="frame-"+String(x.frame).padStart(3,"0")+".png"&&/^[0-9a-f]{64}$/.test(x.sha256));
 }
+
+export function validClipReceipt(r){const v=r?.video;return r?.status==="unapproved-five-second-clip"&&r.engine==="Cycles CPU"&&/^4\.5\.17(?:\s|$)/.test(r.version)&&r.nativeFrameCount===105&&r.totalFrames===120&&r.fps===24&&r.resolution?.join(",")==="1920,1080"&&v?.file==="GRP-Gold-Light-V02-5s.mp4"&&v.codec==="h264"&&v.durationSeconds===5&&v.frames===120&&v.fps===24&&v.width===1920&&v.height===1080&&v.audio===false&&Number.isSafeInteger(v.bytes)&&v.bytes>100&&/^[0-9a-f]{64}$/.test(v.sha256)&&r.originalEndHoldSha256===INPUTS[1].sha256&&r.keyframes?.length===4&&r.keyframes.every((x,i)=>x.frame===FRAMES[i]&&x.file==="frame-"+String(x.frame).padStart(3,"0")+".png"&&/^[0-9a-f]{64}$/.test(x.sha256));}

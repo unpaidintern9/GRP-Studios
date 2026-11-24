@@ -92,6 +92,10 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - User confirmed final deliverable is real 5s/120-frame MP4 (not four keyframes). Keyframes internal only; generated concept images references only. M3 ACTIVE.
 - Corrective candidate retains explicit private permit and one-use gate, adds predicate-specific diagnostics and fresh v3 receipt/state, uses Wrangler deployment rather than a settings PATCH to enable the permit-gated queue. No permit or automatic render at deployment. Next verify new preflight and actual bounded execution, then deliver full animation with measured compute budget.
 
+### Five-second clip production source
+- Owner clarified the deliverable is full video. [Fixed clip production candidate](gold-light-clip-production.md): actual native frames 1–105 at 1080p, original exact hold at frames 106–120, H.264 export, full decode/metadata/frame-count checks, private editable scene and four internal QC frames. Source added; remote clip admission not wired or executed. Active v3 review still uses pinned previous image.
+- Use measured native render timing to select a bounded production budget; no 2D substitution, no claims of final output until clip rendered and reviewed.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 

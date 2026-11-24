@@ -13,3 +13,5 @@
 !plugins/blender/
 !plugins/blender/review-contract.mjs
 !plugins/blender/review-runner.mjs
+!engine/motion/gold_light_clip.py
+!engine/motion/gold_light_post.py
