@@ -15,3 +15,6 @@ The quote planner accepts current per-GPU hourly prices and matching count avail
 2. Authorized single-GPU benchmark, same scene and settings, compare elapsed time, original geometry, device receipt, visual frames and real billing.
 3. Validate private transfer, immutable R2 output, termination and independent deadline; test orphan recovery.
 4. Only then enable production scheduling and multi-GPU frame distribution. No GPU runtime, image publication or deployment has been verified by this source change.
+
+## Credential preflight
+The fixed authenticated queue operation `{ "operation": "gpu-preflight" }` performs only Runpod REST v2 GETs for billing balance and pod listing (scopes `billing:read`, `pods:read`). It stores a sanitized private receipt at `gpu/control/runpod-preflight.json`. No GPU is rented. Worker secret presence was verified on November 24; actual authentication is pending deployment and private preflight. Do not deploy over the active CPU job. API documentation: https://docs.runpod.io/api-reference-v2/overview.

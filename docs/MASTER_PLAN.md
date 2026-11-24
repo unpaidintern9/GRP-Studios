@@ -120,3 +120,5 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 
 ### Runpod GPU backend candidate
 - Owner requested GPU integration; prepaid Runpod account connected. Added opt-in OptiX native renderer, strict GPU receipts, private batch transport and quote-based GPU planner. CPU production stays isolated. See [GPU integration](runpod-gpu.md). M8 remains ACTIVE: image build, benchmark, Cloudflare lifecycle and private job publication still require runtime validation. No GPU rented or production deployment in this change.
+
+- Worker secret `RUNPOD_API_KEY` presence verified; read-only v2 credential preflight source added. No secret value retrieved. Deploy and invoke only after active CPU rendering completes; live key scope, GPU image and lifecycle are still unverified.
