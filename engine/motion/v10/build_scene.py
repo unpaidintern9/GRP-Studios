@@ -5,7 +5,7 @@ Outputs projection/geometry receipt; no render or creative approval implied.
 """
 import bpy, sys, math, json, hashlib
 from pathlib import Path
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Quaternion, Matrix
 from bpy_extras.object_utils import world_to_camera_view
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
@@ -38,10 +38,15 @@ def extent(s,cam,pts):
     p=[world_to_camera_view(s,cam,v) for v in pts]
     if min(v.z for v in p)<=0:raise RuntimeError("Camera crosses logo")
     return min(v.x for v in p),max(v.x for v in p),min(v.y for v in p),max(v.y for v in p)
+def aim_camera(cam,target):
+    # Logo lives in the XY plane: world Y, not the default world Z, is up.
+    z=(cam.location-Vector(target)).normalized();x=Vector((0,1,0)).cross(z).normalized();y=z.cross(x).normalized()
+    cam.rotation_mode="QUATERNION";cam.rotation_quaternion=Matrix((x,y,z)).transposed().to_quaternion()
+
 def pose(s,cam,target,d,yaw,pitch,roll,lens):
     ya,pi=map(math.radians,(yaw,pitch))
     cam.location=target+Vector((d*math.sin(ya)*math.cos(pi),d*math.sin(pi),d*math.cos(ya)*math.cos(pi)))
-    aim(cam,target);cam.rotation_quaternion=cam.rotation_quaternion @ Quaternion((0,0,1),math.radians(roll))
+    aim_camera(cam,target);cam.rotation_quaternion=cam.rotation_quaternion @ Quaternion((0,0,1),math.radians(roll))
     cam.data.lens=lens;cam.data.shift_x=cam.data.shift_y=0
     bpy.context.view_layer.update()
 def solve(s,cam,pts,target,w,cx,cy,yaw,pitch,roll,lens):
@@ -82,8 +87,10 @@ def rebuild_camera(s):
             w=.98
         elif region=="gold" and f==29:
             target.y+=.10*(max(p.y for p in pts)-min(p.y for p in pts))
+        print("SHOT_GEOMETRY",f,region,[[min(p[j] for p in pts),max(p[j] for p in pts)] for j in range(3)],flush=True)
         cx,cy=widescreen(x,y);d,b=solve(s,cam,pts,target,projected_width(w),cx,cy,yaw,pitch,roll,lens)
-        if not bounds_ok(b,region):raise RuntimeError("Clipped full logo at "+str(f))
+        print("SHOT_BOUNDS",f,b,flush=True)
+        if not bounds_ok(b,region):raise RuntimeError("Clipped full logo at "+str((f,b,tuple(target),d,cam.data.shift_x,cam.data.shift_y)))
         shots.append((f,tuple(cam.location),cam.rotation_quaternion.copy(),lens,cam.data.shift_x,cam.data.shift_y,d,tuple(target),roll))
         receipts.append({"frame":f,"region":region,"projected_bounds":list(b),"focus_distance":d})
     # Monotone location/lens/shift, quaternion slerp with eased continuous
@@ -94,7 +101,7 @@ def rebuild_camera(s):
         a,b=shots[i:i+2];u=(f-a[0])/(b[0]-a[0]);u=u*u*(3-2*u)
         cam.location=tuple(monotone([(p[0],p[1][j]) for p in shots],f) for j in range(3))
         target=Vector(tuple(monotone([(p[0],p[7][j]) for p in shots],f) for j in range(3)))
-        aim(cam,target)
+        aim_camera(cam,target)
         q=cam.rotation_quaternion @ Quaternion((0,0,1),math.radians(monotone([(p[0],p[8]) for p in shots],f)))
         if prev is not None and prev.dot(q)<0:q.negate()
         prev=q.copy();cam.rotation_quaternion=q
