@@ -128,3 +128,7 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 - Owner requested GPU integration; prepaid Runpod account connected. Added opt-in OptiX native renderer, strict GPU receipts, private batch transport and quote-based GPU planner. CPU production stays isolated. See [GPU integration](runpod-gpu.md). M8 remains ACTIVE: image build, benchmark, Cloudflare lifecycle and private job publication still require runtime validation. No GPU rented or production deployment in this change.
 
 - Worker secret `RUNPOD_API_KEY` presence verified; read-only v2 credential preflight source added. No secret value retrieved. Deploy and invoke only after active CPU rendering completes; live key scope, GPU image and lifecycle are still unverified.
+
+
+### V04 creative correction
+- Owner rejected V03 native motion preview after viewing it. See [V04 lookdev](gold-light-v04-lookdev.md). Added native 1080p five-checkpoint scene with geometry-derived macro camera, measured 3D depth, reflective stage, navy atmosphere, and restrained glow. Contact sheet generated from the actual Blender outputs for visual comparison. Keep M3 ACTIVE until real visual and full motion acceptance. No paid GPU allocation or final render authorized by code change.

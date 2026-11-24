@@ -54,10 +54,11 @@ async function main(){
    const b=await readFile(path.join(render,x.file));
    if(b.length<24||!b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||b.readUInt32BE(16)!==1920||b.readUInt32BE(20)!==1080||sha(b)!==x.sha256)throw Error("Invalid keyframe");
   }
-  const names=v04?[receiptName,"gold-light-v04.blend",...receipt.keyframes.map(x=>x.file)]:v03?[receiptName,"gold-light-v03.blend",receipt.video.file]:[receiptName,clip?"gold-light-v02.blend":"gold-light-v02-lookdev.blend",...receipt.keyframes.map(x=>x.file),...(clip?[receipt.video.file,"native-receipt.json"]:[])];
+  if(v04){run("python3",["-c","from PIL import Image,ImageDraw; import sys,pathlib; p=pathlib.Path(sys.argv[1]); frames=(1,11,20,39,78); c=Image.new('RGB',(960,870),(8,12,19)); d=ImageDraw.Draw(c); [(c.paste(Image.open(p/f'frame-{f:03d}.png').convert('RGB').resize((480,270),Image.Resampling.LANCZOS),((i%2)*480,(i//2)*290)),d.text(((i%2)*480+8,(i//2)*290+272),f'Native frame {f} / {(f-1)/24:.2f}s',fill=(220,220,220))) for i,f in enumerate(frames)]; c.save(p/'lookdev-contact.jpg',quality=88)",render],30000);}
+  const names=v04?[receiptName,"gold-light-v04.blend",...receipt.keyframes.map(x=>x.file),"lookdev-contact.jpg"]:v03?[receiptName,"gold-light-v03.blend",receipt.video.file]:[receiptName,clip?"gold-light-v02.blend":"gold-light-v02-lookdev.blend",...receipt.keyframes.map(x=>x.file),...(clip?[receipt.video.file,"native-receipt.json"]:[])];
   // Private ZIP contains only the fixed output allowlist. No source PNGs,
   // credentials, logs, or arbitrary directory contents.
-  run("python3",["-c","import sys,zipfile,pathlib; out,root,*names=sys.argv[1:]; z=zipfile.ZipFile(out,'x',compression=zipfile.ZIP_DEFLATED); [z.write(pathlib.Path(root)/n,n) for n in names]; z.close()",archive,render,...names],30000);
+  run("python3",["-c","import sys,zipfile,pathlib; out,root,*names=sys.argv[1:]; z=zipfile.ZipFile(out,'x',compression=zipfile.ZIP_DEFLATED); [z.write(pathlib.Path(root)/n,n,compress_type=zipfile.ZIP_STORED if n=='lookdev-contact.jpg' else zipfile.ZIP_DEFLATED) for n in names]; z.close()",archive,render,...names],30000);
   const st=await stat(archive);if(st.size<100||st.size>MAX_ARCHIVE_BYTES)throw Error("Archive size outside limit");
   const bytes=await readFile(archive);
   process.stdout.write(bytes);

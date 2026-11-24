@@ -38,9 +38,9 @@ def backdrop():
     uv=n.new("ShaderNodeTexCoord");v=n.new("ShaderNodeVectorMath");v.operation="MULTIPLY";v.inputs[1].default_value=(.13,.40,.2)
     l.new(uv.outputs["Object"],v.inputs[0])
     noise=n.new("ShaderNodeTexNoise");noise.inputs["Scale"].default_value=1.9;noise.inputs["Detail"].default_value=3.2;noise.inputs["Roughness"].default_value=.65;l.new(v.outputs[0],noise.inputs["Vector"])
-    ramp=n.new("ShaderNodeValToRGB");r=ramp.color_ramp;r.elements.remove(r.elements[1])
+    ramp=n.new("ShaderNodeValToRGB");r=ramp.color_ramp
     for i,(at,c) in enumerate([(0.0,(.0009,.002,.004)),(.37,(.002,.006,.013)),(.56,(.008,.020,.042)),(.72,(.027,.067,.135)),(1,(.055,.12,.23))]):
-        e=r.elements[0] if i==0 else r.elements.new(at);e.position=at;e.color=(*c,1)
+        e=r.elements[0] if i==0 else r.elements[-1] if i==4 else r.elements.new(at);e.position=at;e.color=(*c,1)
     l.new(noise.outputs["Fac"],ramp.inputs[0])
     em=n.new("ShaderNodeEmission");em.inputs["Strength"].default_value=.75;l.new(ramp.outputs[0],em.inputs[0])
     out=n.new("ShaderNodeOutputMaterial");l.new(em.outputs[0],out.inputs["Surface"]);ob.data.materials.append(m)
