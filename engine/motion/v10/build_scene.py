@@ -1,6 +1,6 @@
 """V10 native reconstruction from immutable V09e geometry. No GPU provisioning.
 Run with Blender 4.5.17: blender -b --factory-startup --python-exit-code 1
- --python build_scene.py -- PRIVATE_V09E.blend PRIVATE_OUTPUT.blend
+ --python build_scene.py -- PRIVATE_V09E.blend PRIVATE_OUTPUT.blend PRIVATE_ASSETS_DIRECTORY
 Outputs projection/geometry receipt; no render or creative approval implied.
 """
 import bpy, sys, math, json, hashlib
@@ -13,7 +13,8 @@ from shot_contract import *
 from gold_light_v09 import monotone, linear_baked
 from gold_light_v02 import rectangle_light, aim, optical_card
 from gold_light_v03 import keys, power
-from gold_light_v06_closing import planet_material, atmosphere_material
+from horizon_math import closing_cues, smoother, screen_ray
+from earth_look import load_maps, build as build_earth
 
 BASE="86ff34d0a65c2bac53317b0539537dc9dfea0163504d207fadc1ea3801e8ee00"
 NAMES=("silver-monogram","gold-r","silver-wordmark","gold-descriptor")
@@ -83,7 +84,7 @@ def rebuild_camera(s):
             target.y+=.10*(max(p.y for p in pts)-min(p.y for p in pts))
         cx,cy=widescreen(x,y);d,b=solve(s,cam,pts,target,projected_width(w),cx,cy,yaw,pitch,roll,lens)
         if not bounds_ok(b,region):raise RuntimeError("Clipped full logo at "+str(f))
-        shots.append((f,tuple(cam.location),cam.rotation_quaternion.copy(),lens,cam.data.shift_x,cam.data.shift_y,d))
+        shots.append((f,tuple(cam.location),cam.rotation_quaternion.copy(),lens,cam.data.shift_x,cam.data.shift_y,d,tuple(target),roll))
         receipts.append({"frame":f,"region":region,"projected_bounds":list(b),"focus_distance":d})
     # Monotone location/lens/shift, quaternion slerp with eased continuous
     # timing; bake every native frame. Stable from f85 through the close.
@@ -92,11 +93,13 @@ def rebuild_camera(s):
         i=next((i for i in range(len(shots)-1) if shots[i][0]<=f<=shots[i+1][0]),len(shots)-2)
         a,b=shots[i:i+2];u=(f-a[0])/(b[0]-a[0]);u=u*u*(3-2*u)
         cam.location=tuple(monotone([(p[0],p[1][j]) for p in shots],f) for j in range(3))
-        q=a[2].slerp(b[2],u)
+        target=Vector(tuple(monotone([(p[0],p[7][j]) for p in shots],f) for j in range(3)))
+        aim(cam,target)
+        q=cam.rotation_quaternion @ Quaternion((0,0,1),math.radians(monotone([(p[0],p[8]) for p in shots],f)))
         if prev is not None and prev.dot(q)<0:q.negate()
         prev=q.copy();cam.rotation_quaternion=q
         for j,name in ((3,"lens"),(4,"shift_x"),(5,"shift_y")):setattr(cam.data,name,monotone([(p[0],p[j]) for p in shots],f));cam.data.keyframe_insert(name,frame=f)
-        cam.data.dof.focus_distance=monotone([(p[0],p[6]) for p in shots],f)
+        cam.data.dof.focus_distance=(cam.location-target).length
         cam.data.dof.aperture_fstop=monotone([(1,16),(15,8),(43,11),(57,16),(168,16)],f)
         cam.data.dof.use_dof=10<=f<57
         for prop in ("focus_distance","aperture_fstop","use_dof"):cam.data.dof.keyframe_insert(prop,frame=f)
@@ -109,6 +112,11 @@ def rebuild_camera(s):
             b=extent(s,cam,group_points(regions[region]))
             if not bounds_ok(b,region):raise RuntimeError("Baked camera clips at "+str(f))
             row["baked_bounds"]=list(b)
+    # Verify every visible full-mark/lockup frame, not just checkpoints.
+    for f in range(57,TOTAL+1):
+        s.frame_set(f);region='mark' if f<85 else 'lockup'
+        b=extent(s,cam,group_points(regions[region]))
+        if not bounds_ok(b,region,tolerance=.024):raise RuntimeError('In-between logo clipping at '+str(f))
     return receipts
 
 def stage(s):
@@ -137,7 +145,7 @@ def stage(s):
     nt=m.node_tree;n=nt.nodes;l=nt.links;p=n.get("Principled BSDF");p.inputs["Base Color"].default_value=(.026,.032,.043,1);p.inputs["Metallic"].default_value=.72;p.inputs["Roughness"].default_value=.105
     geo=n.new("ShaderNodeNewGeometry");dist=n.new("ShaderNodeVectorMath");dist.operation="DISTANCE";dist.inputs[1].default_value=(0,fy,0);l.new(geo.outputs["Position"],dist.inputs[0])
     fall=n.new("ShaderNodeMapRange");fall.clamp=True;fall.interpolation_type="SMOOTHERSTEP";fall.inputs["From Min"].default_value=5;fall.inputs["From Max"].default_value=23;fall.inputs["To Min"].default_value=1;fall.inputs["To Max"].default_value=0;l.new(dist.outputs["Value"],fall.inputs["Value"])
-    fade=n.new("ShaderNodeMath");fade.operation="MULTIPLY";l.new(fall.outputs["Result"],fade.inputs[0]);keys(fade.inputs[1],FLOOR)
+    fade=n.new("ShaderNodeMath");fade.operation="MULTIPLY";l.new(fall.outputs["Result"],fade.inputs[0]);keys(fade.inputs[1],[(f, (smoother(43,57,f)) * closing_cues(f)['stage']) for f in range(1,169)])
     tr=n.new("ShaderNodeBsdfTransparent");mix=n.new("ShaderNodeMixShader");l.new(fade.outputs[0],mix.inputs[0]);l.new(tr.outputs[0],mix.inputs[1]);l.new(p.outputs[0],mix.inputs[2]);l.new(mix.outputs[0],n.get("Material Output").inputs["Surface"])
     world=bpy.data.worlds.new("V10 subtle midnight world");world.use_nodes=True;s.world=world;bg=world.node_tree.nodes.get("Background");bg.inputs["Color"].default_value=(.035,.052,.085,1);bg.inputs["Strength"].default_value=.23
     layer=bpy.context.view_layer
@@ -170,7 +178,7 @@ def stage(s):
     light("V10 atmosphere rim","CoolRim",(-5,fy+4,-5),(1,fy+1,-8),2,4,550,(.30,.49,.85),((1,0),(15,.12),(57,1),(113,.8),(127,0),(168,0)))
     return fy
 
-def closing(s):
+def closing(s,asset_dir):
     # Separate Earth-only view layer: a fixed world-space sphere, not the
     # prior tiny camera-parented globe. No texture rights assumption.
     s.frame_set(168);cam=s.camera
@@ -178,32 +186,32 @@ def closing(s):
     def move(o):
         for c in list(o.users_collection):c.objects.unlink(o)
         earth.objects.link(o)
-    radius=100;distance=185
-    # Solve the actual top tangent using Blender's lens projection instead
-    # of assuming angle_y uses the active 16:9 sensor fit.
-    lo,hi=-.8,.8
-    for _ in range(48):
-        a=(lo+hi)/2
-        p=cam.matrix_world @ Vector((0,math.tan(a),-1))
-        if world_to_camera_view(s,cam,p).y<.23:lo=a
-        else:hi=a
-    theta=(lo+hi)/2
-    check=world_to_camera_view(s,cam,cam.matrix_world @ Vector((0,math.tan(theta),-1))).y
-    if abs(check-.23)>1e-5:raise RuntimeError("Horizon tangent projection failed")
-    phi=theta-math.asin(radius/distance)
-    center=cam.matrix_world@Vector((0,distance*math.sin(phi),-distance*math.cos(phi)))
-    for name,r,mat in [("V10 procedural night world",radius,planet_material()),("V10 thin atmosphere",radius+.23,atmosphere_material())]:
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=256,ring_count=128,radius=r,location=center)
-        ob=bpy.context.object;ob.name=name;ob.data.materials.append(mat);move(ob)
-        for p in ob.data.polygons:p.use_smooth=True
+    maps,manifest=load_maps(asset_dir)
+    fit=build_earth(s,cam,earth,maps)
+    ray=Vector(screen_ray(fit["frame"],.5,fit["apex"]))
+    theta=math.atan2(ray.y,-ray.z)
+    # World is fixed; only foreground opacity and sunrise change.
     # Warm sunrise is an original optical effect in the independent layer.
     for name,depth,w,h,c,e in [("V10 sun core",.65,.035,.013,(1,.85,.55),8),("V10 sun streak",.66,.23,.003,(1,.56,.17),4),("V10 sun halo",.67,.13,.043,(1,.39,.09),1.8)]:
         ob=optical_card(cam,name,depth,w,h,c,e,.3,.22);move(ob);ob.location.y=depth*math.tan(theta)
-        nt=ob.data.materials[0].node_tree;nt.animation_data_clear();ctl=next(n for n in nt.nodes if n.label=="Opening flare intensity");keys(ctl.outputs[0],SUN)
+        nt=ob.data.materials[0].node_tree;nt.animation_data_clear();ctl=next(n for n in nt.nodes if n.label=="Opening flare intensity");keys(ctl.outputs[0],[(f,closing_cues(f)['sun']) for f in range(1,169)])
     tag=bpy.data.objects["V06 closing tagline"];tag.animation_data_clear();tag.data.size=.205
     # Set above horizon, below descriptor. Keep actual campaign typography.
-    bottom=min(p.y for p in group_points((NAMES[3],)));tag.location.y=bottom-.35
-    nt=tag.data.materials[0].node_tree;nt.animation_data_clear();mix=next(n for n in nt.nodes if n.type=="MIX_SHADER");keys(mix.inputs[0],TAG)
+    bottom=min(p.y for p in group_points((NAMES[3],)));tag.location.y=bottom-.28
+    bpy.context.view_layer.update()
+    # Do not let the horizon or tagline collide with the official lockup.
+    tb=extent(s,cam,group_points((tag.name,)));db=extent(s,cam,group_points((NAMES[3],)))
+    if tb[2]<1-fit['apex']+.018 or tb[3]>db[2]-.012:
+        # Solve a safe screen center inside the available wordmark/horizon gap.
+        gap=db[2]-(1-fit['apex']);h=tb[3]-tb[2]
+        if gap<=.04:raise RuntimeError('No safe tagline gap; reframe lockup')
+        if h>gap-.04:tag.data.size*=max(.2,(gap-.04)/h)
+        bpy.context.view_layer.update();tb=extent(s,cam,group_points((tag.name,)))
+        current=(tb[2]+tb[3])/2;desired=(db[2]+1-fit['apex'])/2
+        tag.location.y+=.1;bpy.context.view_layer.update();b2=extent(s,cam,group_points((tag.name,)));slope=((b2[2]+b2[3])/2-current)/.1
+        tag.location.y-=.1;tag.location.y+=(desired-current)/slope;bpy.context.view_layer.update();tb=extent(s,cam,group_points((tag.name,)))
+        if tb[2]<1-fit['apex']+.012 or tb[3]>db[2]-.008:raise RuntimeError('Tagline/horizon overlap')
+    nt=tag.data.materials[0].node_tree;nt.animation_data_clear();mix=next(n for n in nt.nodes if n.type=="MIX_SHADER");keys(mix.inputs[0],[(f,closing_cues(f)['tagline']) for f in range(1,169)])
     # Explicit isolation even when a recovered scene links geometry directly
     # to the scene root. The camera is the only object shared by both layers.
     brand_collection=bpy.data.collections.new("V10 brand and stage");s.collection.children.link(brand_collection)
@@ -232,22 +240,22 @@ def closing(s):
     brand=n.new("CompositorNodeRLayers");brand.layer=main.name
     globe=n.new("CompositorNodeRLayers");globe.layer=layer.name
     bg=n.new("CompositorNodeRGB");bg.outputs[0].default_value=(.004,.009,.019,1)
-    over=n.new("CompositorNodeAlphaOver");l.new(bg.outputs[0],over.inputs[1]);l.new(globe.outputs["Image"],over.inputs[2]);keys(over.inputs[0],EARTH)
+    over=n.new("CompositorNodeAlphaOver");l.new(bg.outputs[0],over.inputs[1]);l.new(globe.outputs["Image"],over.inputs[2]);keys(over.inputs[0],[(f,closing_cues(f)['earth']) for f in range(1,169)])
     mix=n.new("CompositorNodeAlphaOver");mix.inputs[0].default_value=1;l.new(over.outputs[0],mix.inputs[1]);l.new(brand.outputs["Image"],mix.inputs[2])
     glare=n.new("CompositorNodeGlare");glare.glare_type="FOG_GLOW";glare.quality="HIGH";l.new(mix.outputs[0],glare.inputs["Image"])
     # Blender 4.5 exposes glare controls as sockets; no silent fallback.
     glare.inputs["Threshold"].default_value=1.8;glare.inputs["Strength"].default_value=.25
     out=n.new("CompositorNodeComposite");l.new(glare.outputs["Image"],out.inputs["Image"])
-    return {"earth_center":list(center),"radius":radius,"horizon_target_y":.23,"horizon_projected_tangent_y":check,"procedural_not_geographic":True}
+    return {'earth_projection':fit,'assets':manifest,'tagline_bounds':list(tb),'descriptor_bounds':list(db),'earth_fixed':True}
 
 def main():
     if tuple(bpy.app.version)!=(4,5,17):raise RuntimeError("Pinned Blender 4.5.17 required")
-    src,dst=map(Path,sys.argv[sys.argv.index("--")+1:]);src=src.resolve();dst=dst.resolve()
+    src,dst,assets=map(Path,sys.argv[sys.argv.index("--")+1:]);src=src.resolve();dst=dst.resolve();assets=assets.resolve()
     if src==dst or dst.exists():raise RuntimeError("Preserve original and prior candidate")
     if digest(src)!=BASE:raise RuntimeError("Wrong V09e baseline digest")
     bpy.ops.wm.open_mainfile(filepath=str(src));s=bpy.context.scene;s.frame_set(168);before=geometry_signature()
     s.render.resolution_x=1920;s.render.resolution_y=1080;s.render.resolution_percentage=100;s.render.fps=24;s.render.fps_base=1;s.frame_start=1;s.frame_end=168
-    stage(s);projection=rebuild_camera(s);environment=closing(s)
+    stage(s);projection=rebuild_camera(s);environment=closing(s,assets)
     s.frame_set(168);after=geometry_signature()
     if before!=after:raise RuntimeError("Verified logo geometry mutated")
     s.render.engine="CYCLES";s.view_settings.view_transform="AgX";s.render.image_settings.file_format="OPEN_EXR_MULTILAYER";s.render.image_settings.color_depth="16";s.render.image_settings.exr_codec="ZIP";s.cycles.samples=64;s.cycles.adaptive_threshold=.02
