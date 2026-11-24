@@ -78,6 +78,11 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - Frozen deploy/grp-studios-render-v1 branch points to 9c2bfcaa59817cd94519333306e9c1b9e37f4303. Cloudflare native repo connection attempt rejected with 404/8000008; GitHub App authorization for GRP-Studios required. No need to repeat package validation. No auto-deploy on main, no build token created, no compute started.
 - Next: authorize the Git integration, deploy only the frozen branch with rendering disabled, then verify actual protected runtime and cost-controlled one-shot execution.
 
+### Protected deployment checkpoint
+- [Live deployment evidence](evidence/cloudflare-render-deployment-2026-11-24.md): exact validated source deployed as grp-studios; Cloudflare image digest pinned, R2 and DO bindings verified, render admission false, public URLs off.
+- Default scheduling unexpectedly requested one idle instance; immediately set dedicated application's max_instances=0. Verified zero desired/maximum/actual/starting/active instances. **Do not redeploy existing frozen config without correcting scheduling**; it can recreate idle compute. Transient startup billing unverified.
+- M3/M8 remain ACTIVE. Next: correct and verify on-demand lifecycle, configure protected machine operator access, verify cancellation/deadline/teardown, then obtain explicit bounded first-render approval and produce four real private keyframes.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 
