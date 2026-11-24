@@ -59,6 +59,11 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - [Contour evidence](evidence/m3-contour-study-2026-11-24.md): exact source blobs, actual native-resolution JS trace and cleaned-mask round-trip validation. 25 glyph components; monogram classified-mask agreement 100%; 651 isolated small pixels removed. Per-group IoU silver-monogram 99.88%; gold-r 99.91%; silver-wordmark 99.64%; gold-descriptor 99.67%. Candidate only; not vector master or human approval.
 - Private asset preparation code added; no public artwork or output. Next: private local inputs, Blender scene construction and cinematic keyframe review. M3 remains ACTIVE.
 
+### M3 look-development implementation
+- Native Blender scene builder and [construction blueprint](gold-light-construction.md) added. Separate original contours, filled/extruded metal curves, brushed gold/silver, keyed studio lighting, physical macro camera, original procedural gold flare. Four fixed private 1080p review frames (18/36/76/114); no 120-frame render until visual review.
+- 2/2 focused synthetic contour tests passed with the exact trace source in a JavaScript runtime; fixtures cover counters and whole-glyph material classification. Native Blender script and private asset preparation CLI NOT RUN in this chat. Source bytes and production media must stay outside public Git; next action is private execution on the verified container or authorized local machine, not generic smoke re-runs or public upload.
+- M3 remains ACTIVE. Final exact artwork compositing, animation playback, and owner approval pending.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 
