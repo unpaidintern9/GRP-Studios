@@ -134,3 +134,7 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 - Owner rejected V03 native motion preview after viewing it. See [V04 lookdev](gold-light-v04-lookdev.md). Added native 1080p five-checkpoint scene with geometry-derived macro camera, measured 3D depth, reflective stage, navy atmosphere, and restrained glow. Contact sheet generated from the actual Blender outputs for visual comparison. Keep M3 ACTIVE until real visual and full motion acceptance. No paid GPU allocation or final render authorized by code change.
 
 - V04 v1 native attempt failed before any frame at optional Principled anisotropy socket. Container stopped. Corrected socket lookup and added real Blender scene-construction build smoke using synthetic geometry. V04 v2 has a separate one-use admission and output prefix, preserving failed v1 evidence. Visual acceptance remains open.
+
+
+### V05 cinematic repair
+- Owner rejected V04 rendered PNG package as visually inadequate. V04 verified native depth but is not an animation. Read the existing production skills and Blender guidance; added [cinematic title finishing](../.agents/skills/cinematic-title-finishing/SKILL.md). [V05 motion proof](gold-light-v05-motion.md) changes reflection lighting, contour construction, wordmark exposure and continuous camera cadence, then verifies 120 genuine frames at 24fps. Source only until native build and render pass; M3 ACTIVE. Retain previous creative exclusions pending explicit owner change.

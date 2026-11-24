@@ -1,5 +1,6 @@
 // One fixed private lookdev job. Not a general remote execution interface.
 export const TEMPLATE="gold-light-v02-review-v1";
+export const V05_TEMPLATE="gold-light-v05-motion-v1";
 export const V04_TEMPLATE="gold-light-v04-lookdev-v2";
 export const V04_FRAMES=Object.freeze([1,11,20,39,78]);
 export const V03_TEMPLATE="gold-light-v03-motion-v1";
@@ -25,7 +26,7 @@ export const JOB_TIMEOUT_MS=600000;
 export const JOB_KEY="gold-light-v02-review-v1";
 export const OUTPUT_KEY="reviews/"+JOB_KEY+"/lookdev.zip";
 export function validateEnvelope(payload) {
- if(!payload||Object.getPrototypeOf(payload)!==Object.prototype||Object.keys(payload).sort().join(",")!=="assets,template"||![TEMPLATE,CLIP_TEMPLATE,V03_TEMPLATE,V04_TEMPLATE].includes(payload.template)) throw Error("Invalid fixed review template");
+ if(!payload||Object.getPrototypeOf(payload)!==Object.prototype||Object.keys(payload).sort().join(",")!=="assets,template"||![TEMPLATE,CLIP_TEMPLATE,V03_TEMPLATE,V04_TEMPLATE,V05_TEMPLATE].includes(payload.template)) throw Error("Invalid fixed review template");
  if(!Array.isArray(payload.assets)||payload.assets.length!==INPUTS.length)throw Error("Expected two inputs");
  for(let i=0;i<INPUTS.length;i++){
   const v=payload.assets[i],expected=INPUTS[i];
@@ -46,3 +47,5 @@ export function validClipReceipt(r,engine="Cycles CPU"){if(!["Cycles CPU","Cycle
 export function validV03Receipt(r){const v=r?.video;return r?.status==="native-v03-motion-study"&&r.engine==="Cycles CPU"&&/^4\.5\.17(?:\s|$)/.test(r.version)&&r.referenceSha256==="2c407f2474f0173f75ce19689b7741f4ab397012571799132da79ac839c16d26"&&/^[a-f0-9]{64}$/.test(r.geometrySha256)&&r.resolution?.join(",")==="640,360"&&r.fps===10&&r.frameCount===50&&r.sampledMasterFrames?.length===50&&r.sampledMasterFrames.every((x,i)=>x===1+Math.round(i*24/10))&&v?.file==="GRP-V03-motion-review.mp4"&&v.durationSeconds===5&&v.frames===50&&v.fps===10&&v.codec==="h264"&&v.audio===false&&Number.isSafeInteger(v.bytes)&&v.bytes>100&&/^[a-f0-9]{64}$/.test(v.sha256)}
 
 export function validV04Receipt(r){return r?.status==="unapproved-v04-lookdev"&&r.engine==="Cycles CPU"&&/^4\.5\.17(?:\s|$)/.test(r.version)&&r.referenceSha256==="2c407f2474f0173f75ce19689b7741f4ab397012571799132da79ac839c16d26"&&/^[a-f0-9]{64}$/.test(r.geometrySha256)&&r.resolution?.join(",")==="1920,1080"&&r.samples===24&&r.creativeApproval===false&&r.meshes?.length===4&&new Set(r.meshes.map(x=>x.name)).size===4&&["gold-r","silver-monogram","silver-wordmark","gold-descriptor"].every(n=>r.meshes.some(x=>x.name===n&&Number.isFinite(x.depth)&&x.depth>((n==="gold-r"||n==="silver-monogram") ? .4 : .04)&&Number.isInteger(x.faces)&&x.faces>0))&&r.keyframes?.length===V04_FRAMES.length&&r.keyframes.every((x,i)=>x.frame===V04_FRAMES[i]&&x.file==="frame-"+String(x.frame).padStart(3,"0")+".png"&&/^[a-f0-9]{64}$/.test(x.sha256))}
+
+export function validV05Receipt(r){const v=r?.video;return r?.status==="unapproved-v05-motion-proof"&&r.engine==="Cycles CPU"&&/^4\.5\.17(?:\s|$)/.test(r.version)&&r.referenceSha256==="2c407f2474f0173f75ce19689b7741f4ab397012571799132da79ac839c16d26"&&/^[a-f0-9]{64}$/.test(r.geometrySha256)&&r.geometry?.topologyPreserved===true&&Number.isFinite(r.geometry.maxControlDeviationPixels)&&r.geometry.maxControlDeviationPixels>=0&&r.geometry.maxControlDeviationPixels<=.450001&&Number.isInteger(r.geometry.originalContourVertices)&&r.geometry.originalContourVertices>0&&r.resolution?.join(",")==="768,432"&&r.samples===6&&r.nativeFrames===120&&r.fps===24&&r.creativeApproval===false&&r.frameHashes?.length===120&&r.frameHashes.every(x=>/^[a-f0-9]{64}$/.test(x))&&v?.file==="GRP-V05-motion-proof.mp4"&&v.frames===120&&v.fps===24&&v.durationSeconds===5&&v.codec==="h264"&&v.audio===false&&Number.isSafeInteger(v.bytes)&&v.bytes>100&&/^[a-f0-9]{64}$/.test(v.sha256)}
