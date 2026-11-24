@@ -153,6 +153,21 @@ def stage(s):
     hot=light("V10 traveling narrow strip","Travel",(-3,2,1),(0,0,0),.18,2.8,1100,(1,.72,.31),((1,0),(15,.7),(29,1),(57,.8),(113,.6),(141,.15),(168,.15)))
     for f,pos,target in [(15,(-3,2,1),(-1,1,0)),(29,(2,2,2),(.6,1,0)),(43,(3,.1,2),(1,0,0)),(57,(-3,fy+.8,2),(0,fy,0)),(85,(3,fy+.7,2),(0,fy,0)),(113,(3,4,2),(0,1,0)),(168,(3,4,2),(0,1,0))]:
         hot.location=pos;aim(hot,target);hot.keyframe_insert("location",frame=f);hot.keyframe_insert("rotation_quaternion",frame=f)
+    # Real low-density atmospheric depth behind the letters. Keep it away
+    # from the lens and taper out its contribution before the Earth composite.
+    bpy.ops.mesh.primitive_cube_add(size=2,location=(0,fy+3,-7))
+    haze=bpy.context.object;haze.name="V10 soft bounded atmospheric depth";haze.scale=(12,6,4.5)
+    m=bpy.data.materials.new("V10 subtle nonuniform volume");m.use_nodes=True;haze.data.materials.append(m)
+    nt=m.node_tree;n=nt.nodes;l=nt.links;n.clear()
+    coord=n.new("ShaderNodeTexCoord");noise=n.new("ShaderNodeTexNoise");noise.inputs["Scale"].default_value=2.4;noise.inputs["Detail"].default_value=2
+    l.new(coord.outputs["Generated"],noise.inputs["Vector"])
+    remap=n.new("ShaderNodeMapRange");remap.inputs["To Min"].default_value=.2;remap.inputs["To Max"].default_value=1
+    l.new(noise.outputs["Fac"],remap.inputs["Value"])
+    density=n.new("ShaderNodeMath");density.operation="MULTIPLY";l.new(remap.outputs["Result"],density.inputs[0])
+    keys(density.inputs[1],[(1,0),(15,.002),(43,.008),(57,.009),(113,.009),(127,0),(168,0)])
+    volume=n.new("ShaderNodeVolumeScatter");volume.inputs["Color"].default_value=(.35,.50,.75,1);volume.inputs["Anisotropy"].default_value=.3;l.new(density.outputs[0],volume.inputs["Density"])
+    output=n.new("ShaderNodeOutputMaterial");l.new(volume.outputs[0],output.inputs["Volume"])
+    light("V10 atmosphere rim","CoolRim",(-5,fy+4,-5),(1,fy+1,-8),2,4,550,(.30,.49,.85),((1,0),(15,.12),(57,1),(113,.8),(127,0),(168,0)))
     return fy
 
 def closing(s):
@@ -164,8 +179,17 @@ def closing(s):
         for c in list(o.users_collection):c.objects.unlink(o)
         earth.objects.link(o)
     radius=100;distance=185
-    # Top tangent at 0.23 of the screen, corrected for final lens shift.
-    vf=cam.data.angle_y;theta=math.atan((2*(.23-.5)+2*cam.data.shift_y*1920/1080)*math.tan(vf/2))
+    # Solve the actual top tangent using Blender's lens projection instead
+    # of assuming angle_y uses the active 16:9 sensor fit.
+    lo,hi=-.8,.8
+    for _ in range(48):
+        a=(lo+hi)/2
+        p=cam.matrix_world @ Vector((0,math.tan(a),-1))
+        if world_to_camera_view(s,cam,p).y<.23:lo=a
+        else:hi=a
+    theta=(lo+hi)/2
+    check=world_to_camera_view(s,cam,cam.matrix_world @ Vector((0,math.tan(theta),-1))).y
+    if abs(check-.23)>1e-5:raise RuntimeError("Horizon tangent projection failed")
     phi=theta-math.asin(radius/distance)
     center=cam.matrix_world@Vector((0,distance*math.sin(phi),-distance*math.cos(phi)))
     for name,r,mat in [("V10 procedural night world",radius,planet_material()),("V10 thin atmosphere",radius+.23,atmosphere_material())]:
@@ -180,12 +204,20 @@ def closing(s):
     # Set above horizon, below descriptor. Keep actual campaign typography.
     bottom=min(p.y for p in group_points((NAMES[3],)));tag.location.y=bottom-.35
     nt=tag.data.materials[0].node_tree;nt.animation_data_clear();mix=next(n for n in nt.nodes if n.type=="MIX_SHADER");keys(mix.inputs[0],TAG)
-    # Keep camera at root so it remains evaluable in both layers.
+    # Explicit isolation even when a recovered scene links geometry directly
+    # to the scene root. The camera is the only object shared by both layers.
+    brand_collection=bpy.data.collections.new("V10 brand and stage");s.collection.children.link(brand_collection)
     if cam.name not in s.collection.objects:s.collection.objects.link(cam)
+    for ob in list(s.objects):
+        if ob==cam or ob.name in earth.objects:continue
+        for c in list(ob.users_collection):c.objects.unlink(ob)
+        brand_collection.objects.link(ob)
     main=bpy.context.view_layer;main.name="BrandStage";layer=s.view_layers.new("Earth")
     main.layer_collection.children[earth.name].exclude=True
     for c in layer.layer_collection.children:
         if c.name!=earth.name:c.exclude=True
+    bpy.context.view_layer.update()
+    if any(name in layer.objects for name in NAMES):raise RuntimeError("Brand leaked into Earth layer")
     # Existing opening optical geometry stays in stage, reset to ignition f1.
     for ob in s.objects:
         if ob.parent==cam and ob.name not in earth.objects and ob.type=="MESH" and ob.data.materials:
@@ -206,7 +238,7 @@ def closing(s):
     # Blender 4.5 exposes glare controls as sockets; no silent fallback.
     glare.inputs["Threshold"].default_value=1.8;glare.inputs["Strength"].default_value=.25
     out=n.new("CompositorNodeComposite");l.new(glare.outputs["Image"],out.inputs["Image"])
-    return {"earth_center":list(center),"radius":radius,"horizon_target_y":.23,"procedural_not_geographic":True}
+    return {"earth_center":list(center),"radius":radius,"horizon_target_y":.23,"horizon_projected_tangent_y":check,"procedural_not_geographic":True}
 
 def main():
     if tuple(bpy.app.version)!=(4,5,17):raise RuntimeError("Pinned Blender 4.5.17 required")
