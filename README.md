@@ -25,6 +25,7 @@ Make GRP look and sound like a premium financial intelligence company: authentic
 - [Selected Gold Light ident and quality benchmark](docs/gold-light-ident.md)
 
 - [MCP and Cloudflare setup](docs/cloudflare-mcp.md)
+- [Manual validation workflow](https://github.com/unpaidintern9/GRP-Studios/actions/workflows/studio-validate.yml) — local SDK, Worker dry-run and actual generic Blender render; not a deployment.
 
 ## First deliverables
 

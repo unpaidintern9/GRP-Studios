@@ -10,14 +10,17 @@
     "test": "node --test tests/*.test.mjs",
     "mcp:local": "node mcp/stdio.mjs",
     "cf:dev": "wrangler dev --config infrastructure/cloudflare/wrangler.jsonc",
-    "cf:check": "wrangler deploy --dry-run --config infrastructure/cloudflare/wrangler.jsonc"
+    "cf:check": "wrangler deploy --dry-run --config infrastructure/cloudflare/wrangler.jsonc",
+    "verify:stdio": "node scripts/verify_mcp.mjs",
+    "test:schema": "python3 tests/test_d1_schema.py"
   },
   "dependencies": {
-    "@modelcontextprotocol/server": "2.3.1",
+    "@modelcontextprotocol/server": "2.4.0",
     "agents": "0.34.0",
-    "zod": "4.1.13"
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.0.0",
+    "@modelcontextprotocol/client": "2.4.0"
   }
 }

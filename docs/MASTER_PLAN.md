@@ -40,6 +40,13 @@ M2 and M3 are the immediate critical path. M4 source implementation may proceed 
 - V01 2D preview explicitly rejected (commit ccdf0732); no final 3D master.
 - MCP 0.1.0 source added: local stdio, bounded local Blender smoke adapter and read-only remote machine-token preview, Cloudflare config and D1 schema draft. 18 core assertions passed in a JavaScript runtime with fake adapter. Dependency install, actual SDK transport, migration, worker bundle, actual Blender runtime and OAuth/team deployment NOT RUN (no network/package registry or Blender access here). No shared worker, bucket, plugin install or production deployment. See cloudflare-mcp.md.
 
+### M2/M4 execution checkpoint
+- Corrected Agents 0.34.0 exact SDK peer mismatch from server 2.3.1 to 2.4.0 and added matching client for real stdio tests (upstream tagged package.json: https://github.com/cloudflare/agents/blob/agents@0.34.0/packages/agents/package.json). Confirmed official Blender 4.5.17 release listing.
+- Exact prior core/test source rerun: 18 assertions passed. Local Node 22 preview-auth test passed; local SQLite 5/5 migration tests passed against the committed migration SHA. No live D1 access.
+- Added manually dispatched studio-only validation workflow, SDK handshake/render verifier and fail-closed preview guard. Run it on main with render_smoke enabled; review lockfile and public-safe smoke artifact. No automatic workflow or deployment. Workflow dispatch, actual SDK install, bundle, native render, real D1 and Cloudflare access still pending.
+- The standard GitHub-hosted runner is intended for this public repo only; if transferred/private, verify quota before running. No shared Terminal infrastructure.
+- Next: execute validation, review actual metallic smoke, prepare official brand geometry and cinematic V02. Do not enable remote rendering or provision resources until authorized Cloudflare access, OAuth and isolated worker controls exist.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 

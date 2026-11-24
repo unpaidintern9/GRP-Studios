@@ -1,0 +1,64 @@
+name: GRP Studios - manual validation
+on:
+  workflow_dispatch:
+    inputs:
+      render_smoke:
+        description: 'Build Blender container and run actual generic metallic render via MCP'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: grp-studios-manual-validation
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Dependency-free tests
+        run: |
+          npm test
+          npm run test:schema
+      - name: Install dependencies (candidate lockfile if missing)
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+          npm ls --depth=0
+      - name: SDK stdio handshake and tool inventory
+        run: npm run verify:stdio
+      - name: Build Cloudflare Worker without deploying
+        run: npm run cf:check
+      - name: Build pinned Blender container
+        if: inputs.render_smoke
+        run: docker build --platform linux/amd64 -f infrastructure/blender/Dockerfile -t grp-studios-blender:4.5.17 .
+      - name: Run real generic metallic smoke through MCP
+        if: inputs.render_smoke
+        shell: bash
+        run: |
+          mkdir -p renders
+          cat > "$RUNNER_TEMP/blender" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          exec docker run --rm --network none --cpus 4 --memory 6g --user "$(id -u):$(id -g)" --name "grp-studio-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE:ro" -v "$GITHUB_WORKSPACE/renders:$GITHUB_WORKSPACE/renders:rw" -w "$GITHUB_WORKSPACE" --entrypoint /opt/blender/blender grp-studios-blender:4.5.17 "$@"
+          SH
+          chmod +x "$RUNNER_TEMP/blender"
+          BLENDER_BIN="$RUNNER_TEMP/blender" npm run verify:stdio -- --render
+      - name: Remove only the validation container
+        if: always() && inputs.render_smoke
+        run: docker rm -f "grp-studio-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>/dev/null || true
+      - name: Upload public-safe validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grp-studios-validation-${{ github.sha }}
+          path: |
+            package-lock.json
+            renders/mcp-smoke/**/metallic.png
+          if-no-files-found: warn
+          retention-days: 3
