@@ -10,6 +10,7 @@ from gold_light_v03 import keys, power, emission, curve, trim
 from gold_light_v04 import create_scene as old_scene
 from gold_light_v05 import sample_path
 from gold_light_v06_contours import fit_group
+from gold_light_v06_closing import add_closing
 
 def refit(g):
     result={}
@@ -130,6 +131,7 @@ def create_scene(g,sha):
         mat=bpy.data.objects[name].data.materials[0];tree=mat.node_tree;tree.animation_data_clear()
         mix=next(n for n in tree.nodes if n.type=="MIX_SHADER")
         keys(mix.inputs[0],[(1,0),(45,0),(59,1),(120,1)])
+    add_closing(s,bounds)
     s.camera.data.dof.use_dof=False
     s.render.use_motion_blur=True;s.render.motion_blur_shutter=.32
     s.render.resolution_x=1920;s.render.resolution_y=1080;s.render.resolution_percentage=100

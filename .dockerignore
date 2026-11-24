@@ -27,3 +27,5 @@
 !engine/motion/gold_light_v05_post.py
 !engine/motion/gold_light_v06.py
 !engine/motion/gold_light_v06_contours.py
+!engine/motion/gold_light_v06_closing.py
+!engine/motion/gold_light_v06_render.py

@@ -142,3 +142,5 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 
 ### V06 reference reconstruction
 - V05 real native L40S OptiX 120-frame proof completed, three private artifacts verified and GPU terminated. Owner rejected its camera motion, depth and background. Twelve timestamp comparison confirms hard blue room horizon, rippled edges, weak macro choreography, missing traveling lights and closing environment. [V06 candidate](gold-light-v06-reconstruction.md) adds scene-specific contour raster parity and new stage/camera/lighting construction. Source only; do not mark M3 complete or re-rent GPU without authorization. Earth/tagline conflict with active brief requires owner resolution.
+
+- Owner affirmed the full-reference closing treatment after the proposed restoration; active ident creative brief now includes native night-Earth-style horizon and separate SEE BEYOND THE NOISE. line. V06 native closing implementation plus reusable explicit OptiX GPU runner and hard deadline checks added. Build smoke and actual brand render pending; no new rental authorized by this creative change.

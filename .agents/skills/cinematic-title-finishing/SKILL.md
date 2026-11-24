@@ -12,3 +12,5 @@ Read AGENTS.md, docs/MASTER_PLAN.md, gold-light-ident.md and companion blender-p
 6. Native Blender API scene smoke and tiny render smoke precede actual compute. All output private; bounded one-shot execution, preserve failed receipts, no unapproved GPU spend or unrelated deploys.
 
 References: Blender manual motion blur https://docs.blender.org/manual/en/latest/render/cycles/render_settings/motion_blur.html ; light linking https://docs.blender.org/manual/en/latest/render/lights/light_linking.html ; bevel normals https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/bevel.html . These are technique references; runtime is pinned to Blender 4.5.17 and real tests are required.
+
+V06 exception: the active brief's owner-approved closing revision now explicitly permits the native night-Earth-style horizon and separate campaign line for this ident only. Other constraints remain unchanged. Verify the actual closing composition and no inadvertent logo modifications.
