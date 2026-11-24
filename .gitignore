@@ -1,0 +1,45 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials/
+secrets/
+
+# Private brand/media and renders (keep outside public Git)
+private/
+media/
+assets/private/
+brand/private/
+captures/
+raw/
+footage/
+audio/
+renders/
+exports/
+output/
+cache/
+*.mp4
+*.mov
+*.mxf
+*.webm
+*.avi
+*.mkv
+*.wav
+*.aiff
+*.mp3
+*.flac
+*.exr
+*.blend1
+
+# Local tools
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
