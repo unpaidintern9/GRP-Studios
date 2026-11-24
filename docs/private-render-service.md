@@ -20,3 +20,6 @@ Wrangler must be able to build and publish the image to Cloudflare Registry. Do 
 
 ## Known limitations
 Candidate source only: Worker bundle, SDK registration, native Cloudflare container exec lifecycle, timeout/cancel and R2 output path are not yet exercised. Local contract tests check input shape, allowlist, receipt and single-use state. Actual brand render remains outstanding. Team OAuth, D1 job integration, and queue integration remain deferred; do not treat this machine-token endpoint as a team service.
+
+## Build acceptance and exact release branch
+See [verified build evidence](evidence/render-package-acceptance-2026-11-24.md). Both package workflows passed; actual deployable image and Worker bundle were not exported. Native Cloudflare Git connection requires separate GitHub App authorization. Use the frozen deploy/grp-studios-render-v1 branch and the recorded deploy command, not main. Runtime and rendering remain unverified.

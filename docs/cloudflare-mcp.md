@@ -44,3 +44,6 @@ See [live resource evidence](evidence/cloudflare-provisioning-2026-11-24.md). R2
 
 ## Private render service candidate
 See [private render service](private-render-service.md). A separate Wrangler config binds only the dedicated R2 and singleton container. Render admission disabled, routes disabled, no queues attached. Manual source-only packaging workflow must pass before deployment. Team OAuth remains outstanding.
+
+## Render package validation passed
+Both exact-source GitHub builds passed. See [acceptance evidence](evidence/render-package-acceptance-2026-11-24.md). Cloudflare Git integration authorization is the remaining image publication/deployment prerequisite; resource API access alone does not grant that connection. No running container.

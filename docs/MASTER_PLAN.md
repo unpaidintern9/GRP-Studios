@@ -73,6 +73,11 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - Fixed review runner, dedicated source-only image recipe, singleton DO admission and private R2 execution candidate, separate Wrangler config and manual packaging workflow added. Rendering disabled; no deployed Worker, container, queued messages or billing changes. 17 fixed-contract assertions passed against the exact shared contract source in a JS runtime. Native Worker bundle, Docker image and remote exec lifecycle NOT RUN.
 - Next: run source-only package validation, establish authorized image publication and deploy with rendering disabled, verify private operator access and cleanup, then authorize and execute one bounded four-keyframe job. See [private render service](private-render-service.md). Do not rerun generic M2 smoke or publish proprietary render artifacts.
 
+### Render package acceptance — November 24
+- [Exact-source build acceptance](evidence/render-package-acceptance-2026-11-24.md): both manual packaging runs passed. Wrangler 4.168.0, actual service image build, malformed-template rejection, Blender 4.5.17 LTS and five source test cases passed. Artifact hash verified; contains lockfile and build receipt only, no executable bundle or registry image.
+- Frozen deploy/grp-studios-render-v1 branch points to 9c2bfcaa59817cd94519333306e9c1b9e37f4303. Cloudflare native repo connection attempt rejected with 404/8000008; GitHub App authorization for GRP-Studios required. No need to repeat package validation. No auto-deploy on main, no build token created, no compute started.
+- Next: authorize the Git integration, deploy only the frozen branch with rendering disabled, then verify actual protected runtime and cost-controlled one-shot execution.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 
