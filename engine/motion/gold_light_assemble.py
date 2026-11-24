@@ -1,11 +1,14 @@
 """Assemble only the 15 immutable native segment archives. No arbitrary extraction."""
-import hashlib,json,zipfile
+import hashlib,json,zipfile,os
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/"private/gold-light-v02/clip"
 PARTS=ROOT/"private/segments"
 def sha(b):return hashlib.sha256(b).hexdigest()
 def main():
+    device=os.environ.get("GRP_RENDER_DEVICE","CPU")
+    if device not in ("CPU","OPTIX"):raise RuntimeError("Invalid render device")
+    engine="Cycles OptiX" if device=="OPTIX" else "Cycles CPU"
     manifest=json.loads((PARTS/"manifest.json").read_text())
     if len(manifest)!=15:raise RuntimeError("Expected 15 fixed segments")
     OUT.mkdir(exist_ok=False)
@@ -24,7 +27,8 @@ def main():
             if len(z.infolist())!=len(expected) or set(z.namelist())!=expected:raise RuntimeError("Unexpected segment entries")
             if sum(x.file_size for x in z.infolist())>64_000_000:raise RuntimeError("Oversize segment")
             r=json.loads(z.read("native-receipt.json"))
-            if r["status"]!="native-segment-complete" or r["segment"]!=i or r["frameStart"]!=a or r["frameEnd"]!=b or r["nativeFrameCount"]!=7 or r["resolution"]!=[1920,1080] or r["fps"]!=24 or r["samples"]!=12 or r["engine"]!="Cycles CPU" or not r["version"].startswith("4.5.17"):raise RuntimeError("Native segment receipt mismatch")
+            if r["status"]!="native-segment-complete" or r["segment"]!=i or r["frameStart"]!=a or r["frameEnd"]!=b or r["nativeFrameCount"]!=7 or r["resolution"]!=[1920,1080] or r["fps"]!=24 or r["samples"]!=12 or r["engine"]!=engine or not r["version"].startswith("4.5.17"):raise RuntimeError("Native segment receipt mismatch")
+            if device=="OPTIX" and (not r.get("devices") or any(d.get("type")!="OPTIX" or not d.get("name") or not d.get("id") for d in r["devices"])):raise RuntimeError("Missing OptiX device evidence")
             if geometry is None:geometry=r["geometrySha256"];first_receipt=r
             if geometry!=r["geometrySha256"]:raise RuntimeError("Geometry changed across segments")
             if len(r["frameHashes"])!=7:raise RuntimeError("Segment hash count mismatch")

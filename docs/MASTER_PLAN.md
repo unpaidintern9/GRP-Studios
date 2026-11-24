@@ -116,3 +116,7 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 - Technical: studio-architecture.md, blender-team-setup.md.
 - Production: production-roadmap.md (background estimates and campaign specifications; this plan takes precedence for sequence/status).
 - Agent behavior: ../AGENTS.md and ../.agents/skills/.
+
+
+### Runpod GPU backend candidate
+- Owner requested GPU integration; prepaid Runpod account connected. Added opt-in OptiX native renderer, strict GPU receipts, private batch transport and quote-based GPU planner. CPU production stays isolated. See [GPU integration](runpod-gpu.md). M8 remains ACTIVE: image build, benchmark, Cloudflare lifecycle and private job publication still require runtime validation. No GPU rented or production deployment in this change.
