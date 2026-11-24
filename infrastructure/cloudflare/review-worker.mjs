@@ -7,14 +7,14 @@ import { previewGuard } from "./preview-auth.mjs";
 export { GoldLightRenderer } from "./review-do.mjs";
 export { OnDemandGoldLightRenderer } from "./on-demand-review-do.mjs";
 import { clipOperation } from "../../plugins/blender/clip-plan.mjs";
-import { operation, QUEUE } from "./queue-review-contract.mjs";
+import { operation, QUEUE, V03_TEMPLATE } from "./queue-review-contract.mjs";
 
 export default {
  async queue(batch,env){
   if(batch.queue!==QUEUE)throw Error("Unexpected queue");
   for(const m of batch.messages){
    if(!operation(m.body)&&!clipOperation(m.body)){m.ack();continue}
-   await env.ON_DEMAND_RENDERER.getByName("gold-light-v02-singleton").operate(m.body);
+   await env.ON_DEMAND_RENDERER.getByName(m.body.template===V03_TEMPLATE?"gold-light-v03-motion-singleton":"gold-light-v02-singleton").operate(m.body);
    m.ack();
   }
  },
@@ -28,6 +28,7 @@ export default {
     catch(e){return {isError:true,content:[{type:"text",text:"Private review operation unavailable"}]}}
    });
    register("gold_light_review_status","Read one private Gold Light review job's actual state. Does not start compute.",true,()=>stub().status());
+   register("gold_light_v03_motion_status","Read private V03 native motion review status; no compute.",true,async()=>{const o=await env.MEDIA.get("reviews/gold-light-v03-motion-v1/status.json");return o?o.json():{state:"not-started",template:V03_TEMPLATE}});
    return server;
   });
   const response=await handler(request,env,ctx);const headers=new Headers(response.headers);headers.set("Cache-Control","no-store");

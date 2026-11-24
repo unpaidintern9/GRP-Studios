@@ -18,3 +18,5 @@
 !engine/motion/gold_light_assemble.py
 !plugins/blender/clip-plan.mjs
 !plugins/blender/clip-batch-runner.mjs
+!engine/motion/gold_light_v03.py
+!engine/motion/gold_light_v03_post.py

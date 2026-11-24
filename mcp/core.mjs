@@ -4,6 +4,7 @@ const POLICY = {
   "brand": "Gilmer Research Partners",
   "approvedDirection": "Gold Light Emergence",
   "prototypeV01": "rejected: flat 2D reveal",
+  "prototypeV02": "rejected: camera roll, static flare, flat materials, doubled closing transition",
   "rules": [
     "Real human narration only; no cloned or synthetic voices.",
     "Use official artwork and approved product/data captures; no fabricated claims.",
@@ -52,6 +53,7 @@ const PLUGINS = [
   }
 ];
 const TEMPLATES = [
+  {id:"gold-light-v03-motion-v1",engine:"blender",status:"source-candidate",description:"Native reference-led 5-second motion study; private queue admission; not a final master."},
   {
     "id": "metallic-smoke-v1",
     "engine": "blender",
