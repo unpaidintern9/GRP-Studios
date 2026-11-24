@@ -1,7 +1,7 @@
 """V09 native cinematic lookdev; preserve the V08 fitted brand curves.
 
 Can rebuild from the verified private geometry or revise the recovered V08
-.blend directly. Seven seconds, no Earth/tagline or unrelated effects.
+.blend directly. Seven seconds; preserve the owner-approved Earth horizon and campaign line.
 This is an unreviewed scene candidate, not a creative acceptance receipt.
 """
 import math
@@ -138,7 +138,7 @@ def camera(s, b):
         previous=q.copy();cam.location=pos;cam.rotation_quaternion=q;cam.data.lens=lens
         cam.data.dof.focus_distance=d;cam.data.dof.aperture_fstop=monotone([(1,16),(20,8),(65,10),(120,16),(168,16)],f)
         # Optical opening cards are near the camera: keep them crisp until gone.
-        cam.data.dof.use_dof=f>=18
+        cam.data.dof.use_dof=18<=f<110
         for k in ("location","rotation_quaternion"):cam.keyframe_insert(data_path=k,frame=f)
         cam.data.keyframe_insert(data_path="lens",frame=f)
         for k in ("focus_distance","aperture_fstop","use_dof"):
@@ -157,7 +157,7 @@ def environment(s,fy):
     # Discard procedural stretched stripes, old glare streaks and extraneous
     # closing objects. Keep original brand and opening optical cards.
     for ob in list(s.objects):
-        if ob.type=="LIGHT" or ob.name in ("Grounded gold reflection streak","Late diagonal optical sweep","V06 physical night-planet","V06 thin physical atmosphere","V06 closing tagline"):
+        if ob.type=="LIGHT" or ob.name in ("Grounded gold reflection streak","Late diagonal optical sweep"):
             bpy.data.objects.remove(ob,do_unlink=True)
     world=bpy.data.worlds.new("V09 neutral midnight reflection environment");world.use_nodes=True;s.world=world
     bg=world.node_tree.nodes.get("Background")
@@ -175,6 +175,42 @@ def environment(s,fy):
     volume=n.new("ShaderNodeVolumeScatter");volume.inputs["Color"].default_value=(.42,.56,.78,1)
     volume.inputs["Density"].default_value=.005;volume.inputs["Anisotropy"].default_value=.25
     out=n.new("ShaderNodeOutputMaterial");l.new(volume.outputs[0],out.inputs["Volume"]);haze.data.materials.append(m)
+    # Dissolve the physical stage before the approved horizon appears.
+    # Preserve V08 globe/tagline animation, but avoid opaque background occlusion.
+    for ob in (floor,back):
+        tree=ob.data.materials[0].node_tree;n=tree.nodes;l=tree.links
+        p=n.get("Principled BSDF");tr=n.new("ShaderNodeBsdfTransparent");mix=n.new("ShaderNodeMixShader")
+        l.new(tr.outputs[0],mix.inputs[1]);l.new(p.outputs[0],mix.inputs[2])
+        l.new(mix.outputs[0],n.get("Material Output").inputs["Surface"])
+        keys(mix.inputs[0],[(1,1),(104,1),(114,.85),(125,.25),(136,0),(168,0)])
+    keys(volume.inputs["Density"],[(1,.005),(104,.005),(136,0),(168,0)])
+    # Keep the broad physical horizon rather than adding a small detached sphere.
+    planet=bpy.data.objects.get("V06 physical night-planet")
+    limb=bpy.data.objects.get("V06 thin physical atmosphere")
+    if not planet or not limb or not bpy.data.objects.get("V06 closing tagline"):
+        raise RuntimeError("Approved closing objects missing from V08")
+    for ob in (planet,limb):
+        for poly in ob.data.polygons:poly.use_smooth=True
+        # Smooth curvature of the close horizon without changing radius.
+        modifier=ob.modifiers.new("V09 continuous horizon curvature","SUBSURF")
+        modifier.levels=1;modifier.render_levels=2
+    # Restrained city lights and a physically thin atmosphere. The underlying
+    # geographic field remains procedural; a real Earth texture is a followup.
+    for node in planet.data.materials[0].node_tree.nodes:
+        if node.type=="EMISSION":
+            color=node.inputs["Color"]
+            if not color.is_linked and color.default_value[0]>.9:
+                color.default_value=(1,.64,.30,1)
+                for link in node.inputs["Strength"].links:
+                    src=link.from_node
+                    if src.type=="MATH" and src.operation=="MULTIPLY" and not src.inputs[1].is_linked:
+                        src.inputs[1].default_value=13
+            elif not color.is_linked and color.default_value[2]>color.default_value[0]:
+                color.default_value=(.11,.19,.29,1)
+    for node in limb.data.materials[0].node_tree.nodes:
+        if node.type=="EMISSION":
+            node.inputs["Color"].default_value=(.09,.24,.53,1)
+            node.inputs["Strength"].default_value=.85
     # Physical large sources; warm key and cool fill stay separate.
     def area(name,p,t,w,h,e,c,beat):
         ob=rectangle_light(name,p,t,w,h,0,c);power(ob,[(f,e*v) for f,v in beat]);return ob
@@ -209,7 +245,7 @@ def apply_v09(s):
     s.render.resolution_x=1920;s.render.resolution_y=1080;s.render.resolution_percentage=100
     s.render.engine="CYCLES";s.cycles.samples=128;s.cycles.adaptive_threshold=.012
     s.cycles.use_adaptive_sampling=True;s.cycles.use_denoising=True
-    s.cycles.max_bounces=10;s.cycles.glossy_bounces=6;s.cycles.volume_bounces=1
+    s.cycles.max_bounces=10;s.cycles.glossy_bounces=6;s.cycles.volume_bounces=1;s.cycles.transparent_max_bounces=12
     s.render.use_persistent_data=True;s.render.use_motion_blur=True;s.render.motion_blur_shutter=.25
     s.view_settings.view_transform="AgX";s.view_settings.exposure=-.15
     if s.node_tree:
@@ -221,7 +257,7 @@ def apply_v09(s):
     for f,label in [(1,"Gold ignition"),(20,"Machined macro"),(39,"Gold R track"),(65,"Continuous reveal"),(92,"Full lockup"),(120,"Controlled settle"),(145,"Signature hold")]:
         s.timeline_markers.new(label,frame=f)
     s["creative_status"]="unapproved V09 native scene; stills and motion require review"
-    s["closing_treatment"]="original lockup, no globe or tagline"
+    s["closing_treatment"]="original lockup, broad night-Earth horizon and owner-approved campaign line"
     s["duration_seconds"]=7
     return positions
 
