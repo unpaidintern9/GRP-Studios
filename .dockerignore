@@ -15,3 +15,6 @@
 !plugins/blender/review-runner.mjs
 !engine/motion/gold_light_clip.py
 !engine/motion/gold_light_post.py
+!engine/motion/gold_light_assemble.py
+!plugins/blender/clip-plan.mjs
+!plugins/blender/clip-batch-runner.mjs

@@ -96,6 +96,10 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - Owner clarified the deliverable is full video. [Fixed clip production candidate](gold-light-clip-production.md): actual native frames 1–105 at 1080p, original exact hold at frames 106–120, H.264 export, full decode/metadata/frame-count checks, private editable scene and four internal QC frames. Source added; remote clip admission not wired or executed. Active v3 review still uses pinned previous image.
 - Use measured native render timing to select a bounded production budget; no 2D substitution, no claims of final output until clip rendered and reviewed.
 
+### Bounded native clip execution candidate
+- Full motion divided into 15 seven-frame native 1080p segments and one verified assembly. Each segment persists immutable private R2 archive, full assembly independently checks all 105 native frame digests and creates 120-frame H.264 MP4 with exact original hold. One singleton container at a time; 10-minute per-step cap, explicit expiring total-budget permit, no automatic retry. Reuses existing queue and DO application, adds named clip image and queue producer for this finite plan. No compute launched by committing.
+- 9 focused plan/admission checks passed in JS runtime; new Docker image, remote queue sequencing, native clip output NOT RUN. Existing v3 native review must complete first. Do not submit clip-start until owner authorized full production budget and build/preflight verified.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 

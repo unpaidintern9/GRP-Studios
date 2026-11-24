@@ -55,6 +55,10 @@
       "images": {
         "base": {
           "image": "registry.cloudflare.com/4503c227327d5bf330cad259bf0b758e/grp-studios-render-worker@sha256:395c73946a0cbb29eef5997634d9642949565c5e58ab4a2b1574f54aa24452c4"
+        },
+        "clip": {
+          "dockerfile": "../blender/Dockerfile.service",
+          "build_context": "../.."
         }
       },
       "ssh": {
@@ -76,6 +80,12 @@
         "max_retries": 0,
         "max_concurrency": 1,
         "dead_letter_queue": "grp-studios-render-dlq"
+      }
+    ],
+    "producers": [
+      {
+        "binding": "RENDER_QUEUE",
+        "queue": "grp-studios-render-queue"
       }
     ]
   }

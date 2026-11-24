@@ -1,6 +1,8 @@
 import { DurableObject } from "cloudflare:workers";
 import { INPUTS,TEMPLATE,JOB_KEY,OUTPUT_KEY,JOB_TIMEOUT_MS,MAX_ARCHIVE_BYTES } from "../../plugins/blender/review-contract.mjs";
 import { operation,permitValid,PREFLIGHT_KEY,STATUS_KEY,PERMIT_KEY } from "./queue-review-contract.mjs";
+import {clipOperation} from "../../plugins/blender/clip-plan.mjs";
+import {operateClip,clipAlarm} from "./clip-production.mjs";
 const now=()=>new Date().toISOString();
 const sha=async b=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",b)),x=>x.toString(16).padStart(2,"0")).join("");
 const to64=b=>{let s="";for(let i=0;i<b.length;i+=16384)s+=String.fromCharCode(...b.subarray(i,i+16384));return btoa(s)};
@@ -12,8 +14,9 @@ export class OnDemandGoldLightRenderer extends DurableObject {
  async status(){return (await this.#state())??{state:"not-started",template:TEMPLATE}}
  async #finish(next){const result=await this.ctx.storage.transaction(async tx=>{const s=await tx.get("review-v3");if(s?.state!=="running")return s;const v={...s,...next,finishedAt:now()};await tx.put("review-v3",v);return v});if(result)await this.#receipt(STATUS_KEY,result);return result}
  async #stop(){const c=this.ctx.container;if(!c)return false;try{await c.destroy();return !c.running}catch(e){return !c.running}}
- async alarm(){await this.#finish({state:"failed",detail:"Deadline reached"});if(!await this.#stop())await this.ctx.storage.setAlarm(Date.now()+15000)}
+ async alarm(){if(await clipAlarm(this.ctx,this.env))return;await this.#finish({state:"failed",detail:"Deadline reached"});if(!await this.#stop())await this.ctx.storage.setAlarm(Date.now()+15000)}
  async operate(body){
+  if(clipOperation(body))return operateClip(this.ctx,this.env,body);
   const op=operation(body);if(!op)throw Error("Invalid fixed operation");
   if(op==="preflight"){const c=this.ctx.container;if(!c?.images?.base||c.running)throw Error("On-demand container not idle/configured");await this.#assets();const receipt={status:"pass",template:TEMPLATE,image:c.images.base,sourceCount:INPUTS.length,running:false,renderEnabled:this.env.STUDIO_QUEUE_RENDER_ENABLED==="true",at:now()};await this.#receipt(PREFLIGHT_KEY,receipt);return receipt}
   if(op==="cancel"){const s=await this.#state();if(s?.state!=="running")return this.status();await this.#finish({state:"cancelled",detail:"Operator cancellation"});if(await this.#stop())await this.ctx.storage.deleteAlarm();return this.status()}
