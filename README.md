@@ -12,6 +12,10 @@ Make GRP look and sound like a premium financial intelligence company: authentic
 
 ## Start here
 
+- **[Master execution plan](docs/MASTER_PLAN.md)** — canonical priorities, status and decisions
+- **[Agent operating contract](AGENTS.md)** — required reading for all agents
+- [Specialist agent skills](.agents/skills)
+
 - [Creative direction and reference films](docs/creative-direction.md)
 - [Campaigns, storyboard and narration](docs/campaign-plan.md)
 - [Standalone studio architecture and safeguards](docs/studio-architecture.md)
@@ -22,10 +26,10 @@ Make GRP look and sound like a premium financial intelligence company: authentic
 
 ## First deliverables
 
-1. Three five-second GRP signature animation concepts based on approved original vector artwork.
+1. Gold Light Emergence V02: selected five-second cinematic 3D ident (V01 flat preview rejected).
 2. A 15-second premium teaser, no narration, with cinematic footage, real product imagery, and original/licensed sound design.
 3. A 30-second product launch film after visual direction approval.
-4. A reusable motion/render toolkit and, later, a standalone studio interface.
+4. A reusable motion/render toolkit and, later, an MCP-first modular studio; optional interface only if justified.
 5. A 75–90 second flagship film, **Beyond the Noise**, with real human narration.
 
 ## Isolation and ownership
@@ -37,7 +41,9 @@ This is intentionally separate from the Gilmer Research Terminal. No shared repo
 - [x] Standalone repository created.
 - [x] Initial creative direction and planning baseline defined.
 - [ ] Official brand vectors and approved product captures supplied privately.
-- [ ] Three logo concepts prototyped and reviewed.
+- [x] Gold Light Emergence selected; flat V01 rejected.
+- [x] Agent skills and canonical master plan defined.
+- [ ] Shared Blender runtime verified; cinematic V02 approved.
 - [ ] Silent teaser rendered and approved.
 - [ ] Reusable production tools implemented.
 - [ ] Campaign masters reviewed and released.
