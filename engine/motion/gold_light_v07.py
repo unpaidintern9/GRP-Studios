@@ -48,12 +48,12 @@ def stage(s,floor_y):
     weight=n.new("ShaderNodeMath");weight.operation="MULTIPLY";l.new(fall.outputs["Result"],weight.inputs[0]);keys(weight.inputs[1],[(1,0),(9,0),(20,.4),(36,1),(120,1)])
     tr=n.new("ShaderNodeBsdfTransparent");mix=n.new("ShaderNodeMixShader");l.new(weight.outputs[0],mix.inputs[0]);l.new(tr.outputs[0],mix.inputs[1]);l.new(p.outputs[0],mix.inputs[2]);l.new(mix.outputs[0],n.get("Material Output").inputs["Surface"])
 
-def track(cam,knots):
+def track(cam,knots,frame_end=120):
     cam.animation_data_clear();cam.data.animation_data_clear();cam.rotation_mode="QUATERNION"
     position=[(f,Vector(p)) for f,p,t,l,r in knots];target=[(f,Vector(t)) for f,p,t,l,r in knots]
     lenses=[(f,l) for f,p,t,l,r in knots];rolls=[(f,r) for f,p,t,l,r in knots]
     prior=None;positions=[]
-    for f in range(1,121):
+    for f in range(1,frame_end+1):
         p=sample_path(position,f);t=sample_path(target,f);z=(p-t).normalized();x=Vector((0,1,0)).cross(z).normalized();y=z.cross(x).normalized()
         q=Matrix((x,y,z)).transposed().to_quaternion() @ Quaternion((0,0,1),math.radians(sample_path(rolls,f)))
         if prior is not None and prior.dot(q)<0:q.negate()
