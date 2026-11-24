@@ -54,7 +54,8 @@ def create_scene(g,sha):
         action=ob.animation_data.action
         for fc in list(channels(action)):
             if fc.data_path=="location":
-                for k in list(fc.keyframe_points):fc.keyframe_points.remove(k,fast=True)
+                # Blender RNA point references are invalidated by removal.
+                fc.keyframe_points.clear()
                 fc.update()
         for frame,y in HORIZON:
             ob.location=(0,y,-135);ob.keyframe_insert(data_path="location",frame=frame)
