@@ -28,10 +28,10 @@ These commands use POSIX shells; PowerShell users can substitute ${PWD} for the 
 
 The Dockerfile fetches the versioned Blender archive and its published SHA-256 list and verifies the archive before extraction. No scheduled jobs, runner, cloud service, or Docker image registry is provisioned by this commit.
 
-## Team-wide browser access (next milestone, not deployed)
-A GitHub repository is not a hosted rendering service. To let every team member work from a browser without installing Blender, deploy one independent GRP Studios web interface and a dedicated Blender render worker. Keep the worker entirely separate from the Research Terminal.
+## Team-wide MCP access (future milestone, not deployed)
+A GitHub repository is not a hosted rendering service. To let every team member work without installing Blender, use the independent GRP Studios remote MCP and a dedicated Blender render worker. A web interface is optional, deferred and not required. Keep the worker entirely separate from the Research Terminal.
 
-- Studio UI: authenticated project library, versioned scene templates, preview, render requests, progress, review, export.
+- MCP tools: authenticated project library, versioned scene templates, preview, render requests, progress, review, export.
 - Queue: explicit manual render jobs with bounded concurrency, time, disk and sample limits; cancel/retry; enforce per-user permissions.
 - Blender worker: isolated CPU/GPU execution, read-only inputs, per-job scratch space, approved templates only, no arbitrary user Python, no Terminal access.
 - Storage: private asset store (local initially; dedicated private R2 later if approved) with signed download links, versioning and retention.

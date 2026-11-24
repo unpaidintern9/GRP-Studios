@@ -4,7 +4,7 @@ Independent cinematic marketing, motion graphics, and video production toolkit f
 
 > **See beyond the noise.**
 
-This repository preserves the creative and technical direction established on November 24, 2026. It is a planning baseline, not a claim that the studio, animations, or films are already built.
+This repository preserves the creative and technical direction established on November 24, 2026. It contains the planning baseline and early MCP implementation; the studio is not deployed and the cinematic ident is not final.
 
 ## Mission
 
@@ -23,6 +23,8 @@ Make GRP look and sound like a premium financial intelligence company: authentic
 
 - [Shared Blender production setup](docs/blender-team-setup.md)
 - [Selected Gold Light ident and quality benchmark](docs/gold-light-ident.md)
+
+- [MCP and Cloudflare setup](docs/cloudflare-mcp.md)
 
 ## First deliverables
 
@@ -45,7 +47,8 @@ This is intentionally separate from the Gilmer Research Terminal. No shared repo
 - [x] Agent skills and canonical master plan defined.
 - [ ] Shared Blender runtime verified; cinematic V02 approved.
 - [ ] Silent teaser rendered and approved.
-- [ ] Reusable production tools implemented.
+- [x] MCP core and local Blender smoke adapter source added (fake-worker core tests passed; actual runtime not yet verified).
+- [ ] Reusable production tools fully tested and deployed.
 - [ ] Campaign masters reviewed and released.
 
 No automation, cloud resources, paid services, or application deployments are required to start. See the roadmap before making purchases or provisioning services.

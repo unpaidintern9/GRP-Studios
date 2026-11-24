@@ -43,3 +43,8 @@ build/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Cloudflare local state / secrets
+.wrangler/
+.dev.vars
+.dev.vars.*

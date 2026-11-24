@@ -6,6 +6,7 @@ Read this file at the beginning of every task. Read [docs/MASTER_PLAN.md](docs/M
 - Premium, professional cinematic production. Real human voices only. AI may assist imagery and effects but cannot fabricate brand identity, product data, testimonials or narration.
 - Gold Light Emergence is selected for the first ident; the original cinematic concept is the benchmark. V01 flat 2D animation is rejected. Never lower the standard just to return a file.
 - Official GRP source artwork and authentic approved product captures only. No redesign by default.
+- Cloudflare-first, not Cloudflare-only. Studio-specific Workers, D1, R2 and Queues when authorized; isolated local/on-demand Blender compute, no always-running GPU. See docs/cloudflare-mcp.md.
 - MCP-first, modular plugins, shared reusable skills. A standalone website is optional and deferred; no unnecessary platform build.
 - Completely separate from the Research Terminal. No shared repo, secrets, production APIs, database, ingestion, runners or deployments. Read-only provenance or approved exported assets is allowed.
 - Public repository: no proprietary media, credentials, confidential data, private references or unreleased production files. Do not publish marketing assets automatically.

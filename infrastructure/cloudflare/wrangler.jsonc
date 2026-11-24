@@ -1,0 +1,12 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "grp-studios-mcp",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true }
+  // No public routes, D1, R2 or queue bindings until authorized provisioning.
+  // STUDIO_PREVIEW_TOKEN is a Worker secret, not a vars value.
+}

@@ -1,0 +1,23 @@
+{
+  "name": "grp-studios",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "mcp:local": "node mcp/stdio.mjs",
+    "cf:dev": "wrangler dev --config infrastructure/cloudflare/wrangler.jsonc",
+    "cf:check": "wrangler deploy --dry-run --config infrastructure/cloudflare/wrangler.jsonc"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.3.1",
+    "agents": "0.34.0",
+    "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

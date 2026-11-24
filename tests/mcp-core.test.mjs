@@ -1,0 +1,12 @@
+import { test } from "node:test";
+import { createJobs, buildRegistry } from "../mcp/core.mjs";
+async function runChecks(){
+  let count=0;function ok(b,m){if(!b)throw Error(m);count++}
+  async function rejects(fn){let yes=false;try{await fn()}catch{yes=true}ok(yes,"expected rejection")}
+  const remote=buildRegistry({mode:"remote"});ok(remote.definitions().length===4,"remote read only");ok(remote.definitions().every(x=>x.readOnly),"read only annotations");await rejects(()=>remote.invoke("render_smoke"));await rejects(()=>remote.invoke("list_templates",{path:"../../private"}));await rejects(()=>remote.invoke("list_plugins",[]));
+  ok((await remote.invoke("get_brand_policy")).prototypeV01.includes("rejected"),"retain rejection");ok((await remote.invoke("list_templates")).find(x=>x.id==="gold-light-v02").status==="blocked","truthful template status");
+  let resolveRun, id=0;let signal;const jobs=createJobs(({signal:s})=>{signal=s;return new Promise(r=>resolveRun=r)},{id:()=>String(++id),now:()=>"test",controller:()=>{const signal={aborted:false};return {signal,abort(){signal.aborted=true}}}});
+  const local=buildRegistry({mode:"local",jobs});ok(local.definitions().length===7,"local 7 tools");const job=await local.invoke("render_smoke");ok(job.state==="running","job starts");await rejects(()=>local.invoke("render_smoke"));await rejects(()=>local.invoke("render_status",{job_id:"unknown"}));await rejects(()=>local.invoke("render_status",{job_id:1}));await rejects(()=>local.invoke("render_smoke",{scene:"evil.blend"}));
+  ok((await local.invoke("cancel_render",{job_id:job.id})).state==="cancelling","cancellation requested");ok(signal.aborted,"abort signal");resolveRun({artifact:"ignored"});for(let i=0;i<8;i++)await Promise.resolve();ok((await local.invoke("render_status",{job_id:job.id})).state==="cancelled","cancel terminal");const second=await local.invoke("render_smoke");resolveRun({artifact:"renders/test.png"});for(let i=0;i<8;i++)await Promise.resolve();const done=await local.invoke("render_status",{job_id:second.id});ok(done.state==="succeeded"&&done.artifact==="renders/test.png","successful artifact");const third=await local.invoke("render_smoke");resolveRun({});for(let i=0;i<8;i++)await Promise.resolve();ok((await local.invoke("render_status",{job_id:third.id})).state==="failed","empty artifact fails");return count;
+}
+test("registry, guards and local job lifecycle",async()=>{const count=await runChecks(); console.error("Assertions passed:",count)});
