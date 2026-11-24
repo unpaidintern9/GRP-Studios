@@ -51,3 +51,6 @@ Inspect frame 18 against the owner's chosen flare. Frame 36 must show visible re
 
 ## Current evidence
 Native-resolution contour analysis passed on both original repository PNGs (see evidence/m3-contour-study-2026-11-24.md). M2 proves Blender runtime on an isolated GitHub runner, not this new scene. This new Blender script has not been executed; scene, keyframes and visual quality remain NOT RUN until private render. The contour CLI's filesystem entry point still requires execution with original files.
+
+## Private cloud asset staging
+Both exact original PNGs are now present in dedicated private R2 at brand/originals/<git-blob>/<filename>. Source Git blob and readback SHA-256 verified. The upcoming render service should stage these into the existing private input layout without contacting the Terminal. No render has yet run from R2.

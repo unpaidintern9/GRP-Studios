@@ -38,3 +38,6 @@ Run [45437812409](https://github.com/unpaidintern9/GRP-Studios/actions/runs/4543
 
 ## Successful runtime validation — November 24, 2026
 See [M2 acceptance evidence](evidence/m2-runtime-2026-11-24.md). Run 45438147120 passed dependency installation, SDK stdio handshake, Worker dry-run, Docker build and real Blender smoke. Downloaded artifact hash and visual inspection confirmed. Real D1, OAuth, live deployment and lockfile commitment remain pending. This result supersedes the earlier failed download.
+
+## Authorized provisioning checkpoint
+See [live resource evidence](evidence/cloudflare-provisioning-2026-11-24.md). R2, D1 and both queues now exist; live migration passed and original logos are verified in private R2. Earlier proposed/not-created labels are historical. Worker, container, authenticated team access and queue bindings are still pending. No public route or active consumer.

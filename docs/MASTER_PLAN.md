@@ -27,7 +27,7 @@ An MCP-first modular creative studio usable by the team through AI clients, with
 | M5 | PLANNED | Finish cinematic identity | Approved 4K ident, 1s R sweep, alpha variant, clean close, optional original sound and silent masters; verified playback and rights. |
 | M6 | PLANNED | Video and sound plugins | Reproducible compositing/export, audio mix, validated media outputs; actual integration tests. |
 | M7 | PLANNED | Product/motion/design plugins | Real approved UI and data; 15s teaser then 30s launch proof; reusable scene templates, quality review. |
-| M8 | PLANNED | Shared authenticated MCP and render worker | Authorized team access, isolation, quotas, private assets, status/cancellation, no arbitrary code; explicit infrastructure approval before provisioning. |
+| M8 | ACTIVE | Shared authenticated MCP and render worker | Authorized team access, isolation, quotas, private assets, status/cancellation, no arbitrary code; explicit infrastructure approval before provisioning. |
 | M9 | PLANNED | Campaign and optional AI cinema integrations | 60s platform film, 75–90s Beyond the Noise human-narrated flagship, targeted variants; only approved spending and publication. |
 | M10 | PLANNED | Extend plugin ecosystem | Independently versioned adapters (design, data motion, QA, distribution, providers) as needed; optional multi-brand support. Website only if requested/justified. |
 
@@ -63,6 +63,11 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - Native Blender scene builder and [construction blueprint](gold-light-construction.md) added. Separate original contours, filled/extruded metal curves, brushed gold/silver, keyed studio lighting, physical macro camera, original procedural gold flare. Four fixed private 1080p review frames (18/36/76/114); no 120-frame render until visual review.
 - 2/2 focused synthetic contour tests passed with the exact trace source in a JavaScript runtime; fixtures cover counters and whole-glyph material classification. Native Blender script and private asset preparation CLI NOT RUN in this chat. Source bytes and production media must stay outside public Git; next action is private execution on the verified container or authorized local machine, not generic smoke re-runs or public upload.
 - M3 remains ACTIVE. Final exact artwork compositing, animation playback, and owner approval pending.
+
+### Cloudflare provisioning checkpoint
+- Owner authorized dedicated infrastructure under existing plan. [Provisioning evidence](evidence/cloudflare-provisioning-2026-11-24.md): private R2, D1, two inactive queues created and read back; initial live D1 migration PASS, four tables verified, no foreign key violations. Both official PNGs copied to private R2 and checksums verified.
+- M8 ACTIVE in parallel with M3. Worker and render container NOT DEPLOYED; OAuth, private job execution and actual cinematic render outstanding. No recurring compute or plan upgrade. Billing scope unavailable.
+- Next: package verified renderer as an isolated, bounded service and produce a deployable MCP bundle; execute four private keyframes after secure render path is operational.
 
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
