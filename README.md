@@ -17,6 +17,9 @@ Make GRP look and sound like a premium financial intelligence company: authentic
 - [Standalone studio architecture and safeguards](docs/studio-architecture.md)
 - [Production roadmap, budget and quality gates](docs/production-roadmap.md)
 
+- [Shared Blender production setup](docs/blender-team-setup.md)
+- [Selected Gold Light ident and quality benchmark](docs/gold-light-ident.md)
+
 ## First deliverables
 
 1. Three five-second GRP signature animation concepts based on approved original vector artwork.
