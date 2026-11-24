@@ -1,0 +1,34 @@
+import { readFile, writeFile, mkdir, realpath } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { inflateSync } from 'node:zlib';
+import { decodePng, buildGeometry } from './trace_logo.mjs';
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const privateRoot=path.join(root,'private');
+const brand=path.join(privateRoot,'brand');
+const output=path.join(privateRoot,'gold-light-v02');
+const expected={full:'84bba8beaba9ec557d05f5426e958233f00d3605',mark:'8c8b9cad7ad96ffae49f778b78d09f7ce29b82cb'};
+const blob=b=>createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex');
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const inside=(parent,child)=>{let rel=path.relative(parent,child);return !!rel&&rel!=='..'&&!rel.startsWith('..'+path.sep)&&!path.isAbsolute(rel)};
+async function main(){
+ const ar=await realpath(root),ap=await realpath(privateRoot),ab=await realpath(brand);
+ if(ap!==path.join(ar,'private')||!inside(ap,ab))throw Error('Brand paths must remain private');
+ const input=await Promise.all(['grp-full-reverse.png','grp-mark-reverse.png'].map(n=>realpath(path.join(brand,n))));
+ if(input.some(p=>!inside(ab,p)))throw Error('Input escapes brand directory');
+ const [full,mark]=await Promise.all(input.map(p=>readFile(p)));
+ if(blob(full)!==expected.full||blob(mark)!==expected.mark)throw Error('Exact official Git blob mismatch');
+ const inflate=(z,n)=>inflateSync(z,{maxOutputLength:n});
+ const g=buildGeometry(decodePng(full,inflate),decodePng(mark,inflate));
+ const result={...g,sources:{full:{blob:expected.full,sha256:sha(full)},mark:{blob:expected.mark,sha256:sha(mark)}},status:'candidate-not-human-approved'};
+ await mkdir(output,{recursive:true});
+ if(!inside(ap,await realpath(output)))throw Error('Output escapes private');
+ const data=JSON.stringify(result,null,2)+'\n';
+ const report={...result,groups:g.groups.map(({loops,...x})=>x),geometrySha256:sha(Buffer.from(data))};
+ const colors=['#d6d9dc','#e9ae22','#d6d9dc','#e9ae22'];
+ const svg=['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 934">','<rect width="1536" height="934" fill="#060b13"/>',...g.groups.map((x,i)=>'<path fill="'+colors[i]+'" fill-rule="evenodd" d="'+x.loops.map(p=>'M'+p.map(z=>z.join(',')).join('L')+'Z').join(' ')+'"/>'),'</svg>'].join('\n');
+ for(const [name,content] of [['geometry.json',data],['silhouette-review.svg',svg],['geometry-report.json',JSON.stringify(report,null,2)+'\n']])await writeFile(path.join(output,name),content,{flag:'wx'});
+ console.log(JSON.stringify(report,null,2));
+}
+main().catch(e=>{console.error(e.message);process.exitCode=1;});

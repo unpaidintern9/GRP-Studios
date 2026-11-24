@@ -55,6 +55,10 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - M2 DONE, M3 ACTIVE. No need to repeat the generic validation just to advance the ident. M4 stays ACTIVE until its remaining exit criteria are met.
 - Next: private official logo input and contour validation, then real cinematic keyframes and V02 preview. Review and commit the candidate lockfile before deploying; do not mistake dry-run for live Cloudflare deployment.
 
+### M3 construction checkpoint
+- [Contour evidence](evidence/m3-contour-study-2026-11-24.md): exact source blobs, actual native-resolution JS trace and cleaned-mask round-trip validation. 25 glyph components; monogram classified-mask agreement 100%; 651 isolated small pixels removed. Per-group IoU silver-monogram 99.88%; gold-r 99.91%; silver-wordmark 99.64%; gold-descriptor 99.67%. Candidate only; not vector master or human approval.
+- Private asset preparation code added; no public artwork or output. Next: private local inputs, Blender scene construction and cinematic keyframe review. M3 remains ACTIVE.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 
