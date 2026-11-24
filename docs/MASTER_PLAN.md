@@ -87,6 +87,11 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - New SQLite DO class and replacement durable_object scheduling application use the previously published digest-pinned Blender image. Old app remains separate and zero capacity. No public routes or HTTP render tools. Fixed authenticated-account queue operation and R2 permit, one-use admission, deadline, independent PID 1 timeout; STUDIO_QUEUE_RENDER_ENABLED=false. Preflight does not start compute.
 - Next: deploy corrected candidate only; verify zero instances, disabled render admission and private preflight receipt before enabling any render. Actual runtime not yet verified.
 
+### First live render and corrective release
+- [Private render evidence](evidence/private-render-attempt-2026-11-24.md): on-demand deployment/preflight passed, first authorized job failed before container start with compound state guard. Permit revoked and zero instances verified; no output. Settings PATCH created a different version; possible image metadata loss not yet proven.
+- User confirmed final deliverable is real 5s/120-frame MP4 (not four keyframes). Keyframes internal only; generated concept images references only. M3 ACTIVE.
+- Corrective candidate retains explicit private permit and one-use gate, adds predicate-specific diagnostics and fresh v3 receipt/state, uses Wrangler deployment rather than a settings PATCH to enable the permit-gated queue. No permit or automatic render at deployment. Next verify new preflight and actual bounded execution, then deliver full animation with measured compute budget.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 

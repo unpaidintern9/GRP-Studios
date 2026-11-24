@@ -13,7 +13,7 @@
   },
   "vars": {
     "STUDIO_RENDER_ENABLED": "false",
-    "STUDIO_QUEUE_RENDER_ENABLED": "false"
+    "STUDIO_QUEUE_RENDER_ENABLED": "true"
   },
   "r2_buckets": [
     {

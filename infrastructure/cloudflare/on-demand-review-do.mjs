@@ -8,9 +8,9 @@ async function bounded(stream,limit){if(!stream)throw Error("Missing output stre
 export class OnDemandGoldLightRenderer extends DurableObject {
  async #assets(){const assets=[];for(const s of INPUTS){const o=await this.env.MEDIA.get(s.key);if(!o||o.size!==s.bytes)throw Error("Source size mismatch");const b=new Uint8Array(await o.arrayBuffer());if(await sha(b)!==s.sha256)throw Error("Source digest mismatch");assets.push({name:s.name,base64:to64(b)})}return assets}
  async #receipt(key,body){await this.env.MEDIA.put(key,JSON.stringify(body),{httpMetadata:{contentType:"application/json"}})}
- async #state(){return await this.ctx.storage.get("review")}
+ async #state(){return await this.ctx.storage.get("review-v3")}
  async status(){return (await this.#state())??{state:"not-started",template:TEMPLATE}}
- async #finish(next){const result=await this.ctx.storage.transaction(async tx=>{const s=await tx.get("review");if(s?.state!=="running")return s;const v={...s,...next,finishedAt:now()};await tx.put("review",v);return v});if(result)await this.#receipt(STATUS_KEY,result);return result}
+ async #finish(next){const result=await this.ctx.storage.transaction(async tx=>{const s=await tx.get("review-v3");if(s?.state!=="running")return s;const v={...s,...next,finishedAt:now()};await tx.put("review-v3",v);return v});if(result)await this.#receipt(STATUS_KEY,result);return result}
  async #stop(){const c=this.ctx.container;if(!c)return false;try{await c.destroy();return !c.running}catch(e){return !c.running}}
  async alarm(){await this.#finish({state:"failed",detail:"Deadline reached"});if(!await this.#stop())await this.ctx.storage.setAlarm(Date.now()+15000)}
  async operate(body){
@@ -19,12 +19,17 @@ export class OnDemandGoldLightRenderer extends DurableObject {
   if(op==="cancel"){const s=await this.#state();if(s?.state!=="running")return this.status();await this.#finish({state:"cancelled",detail:"Operator cancellation"});if(await this.#stop())await this.ctx.storage.deleteAlarm();return this.status()}
   if(this.env.STUDIO_QUEUE_RENDER_ENABLED!=="true")throw Error("Queue render disabled");
   const permit=await this.env.MEDIA.get(PERMIT_KEY);if(!permit||!permitValid(await permit.json(),body.nonce,Date.now()))throw Error("Missing or expired private permit");
-  const claimed=await this.ctx.storage.transaction(async tx=>{if(await tx.get("review"))return false;await tx.put("review",{id:JOB_KEY,template:TEMPLATE,state:"running",createdAt:now(),deadline:Date.now()+JOB_TIMEOUT_MS});return true});if(!claimed)return this.status();
+  const claimed=await this.ctx.storage.transaction(async tx=>{if(await tx.get("review-v3"))return false;await tx.put("review-v3",{id:JOB_KEY,template:TEMPLATE,state:"running",createdAt:now(),deadline:Date.now()+JOB_TIMEOUT_MS});return true});if(!claimed)return this.status();
   try{await this.ctx.storage.setAlarm(Date.now()+JOB_TIMEOUT_MS);await this.#receipt(STATUS_KEY,await this.#state())}catch(e){await this.#finish({state:"failed",detail:"Safety setup failed"});throw e}
   // Await from the queue invocation rather than relying on waitUntil to keep a long render alive.
   const abort=new AbortController();const timer=setTimeout(()=>abort.abort(),JOB_TIMEOUT_MS-1000);let next={state:"failed",detail:"Render did not complete"};
   try{
-   const assets=await this.#assets();const c=this.ctx.container;if(!c?.images?.base||c.running||(await this.#state())?.state!=="running"||abort.signal.aborted)throw Error("Unsafe container state");
+   const assets=await this.#assets();const c=this.ctx.container;
+   if(!c)throw Error("Container binding missing");
+   if(!c.images?.base)throw Error("Container base image missing from Worker version");
+   if(c.running)throw Error("Container already running");
+   if((await this.#state())?.state!=="running")throw Error("Review claim no longer running");
+   if(abort.signal.aborted)throw Error("Review deadline expired before start");
    // Independent in-container lifetime limit even if the Worker is interrupted.
    c.start({image:c.images.base,instance:"standard-4",enableInternet:false,entrypoint:["/usr/bin/timeout","--signal=KILL","600s","/bin/sleep","infinity"]});
    await c.setInactivityTimeout(JOB_TIMEOUT_MS);

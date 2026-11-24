@@ -29,3 +29,6 @@ See [verified build evidence](evidence/render-package-acceptance-2026-11-24.md).
 
 ## On-demand correction candidate
 New class OnDemandGoldLightRenderer and new application grp-studios-render-on-demand select the existing registry image at runtime under durable_object scheduling. The old class and binding remain but the old app is omitted from new config to avoid restoring capacity. Existing app remains zero-capacity. Use Cloudflare account-authenticated queue for fixed operations and private R2 receipts, with an additional expiring nonce permit for one render and rendering disabled by default. No public start/cancel route. No arbitrary commands. New path is not yet runtime tested.
+
+## Live on-demand preflight and first attempt
+See [private render evidence](evidence/private-render-attempt-2026-11-24.md). v2 failed before start. Corrective release keeps queue admission configured at deploy time and requires a private expiring permit; no public start route or permit at deployment. v3 receipts and claim preserve previous failure. Final target is full 5-second MP4; stills are internal checks only.
