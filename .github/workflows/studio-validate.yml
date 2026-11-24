@@ -45,13 +45,14 @@ jobs:
           cat > "$RUNNER_TEMP/blender" <<'SH'
           #!/usr/bin/env bash
           set -euo pipefail
-          exec docker run --rm --network none --cpus 4 --memory 6g --user "$(id -u):$(id -g)" --name "grp-studio-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE:ro" -v "$GITHUB_WORKSPACE/renders:$GITHUB_WORKSPACE/renders:rw" -w "$GITHUB_WORKSPACE" --entrypoint /opt/blender/blender grp-studios-blender:4.5.17 "$@"
+          root="$(pwd -P)"
+          exec docker run --rm --network none --cpus 4 --memory 6g --user "$(id -u):$(id -g)" --name "grp-studio-smoke-validation" -v "$root:$root:ro" -v "$root/renders:$root/renders:rw" -w "$root" --entrypoint /opt/blender/blender grp-studios-blender:4.5.17 "$@"
           SH
           chmod +x "$RUNNER_TEMP/blender"
           BLENDER_BIN="$RUNNER_TEMP/blender" npm run verify:stdio -- --render
       - name: Remove only the validation container
         if: always() && inputs.render_smoke
-        run: docker rm -f "grp-studio-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>/dev/null || true
+        run: docker rm -f "grp-studio-smoke-validation" 2>/dev/null || true
       - name: Upload public-safe validation evidence
         if: always()
         uses: actions/upload-artifact@v4
