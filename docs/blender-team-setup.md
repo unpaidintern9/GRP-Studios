@@ -44,3 +44,6 @@ Maintain the selected Gold Light Emergence visual direction, exact official geom
 
 ## Verification
 Run the check and smoke commands on the target machine before using the worker for a production job. Verify Blender reports 4.5.17, the smoke PNG is non-empty and visually shows metallic highlights, and a complete render sequence has expected frame count. This setup is scaffolding, not an acceptance receipt for the final GRP animation. Keep a record of runtime/OS, version and job outcome.
+
+## Runtime acceptance
+The Blender 4.5.17 Linux container and local MCP metallic smoke render passed on GitHub-hosted Ubuntu 24.04. See [M2 runtime evidence](evidence/m2-runtime-2026-11-24.md). The selected GRP ident still requires validated geometry and creative approval.

@@ -46,9 +46,10 @@ This is intentionally separate from the Gilmer Research Terminal. No shared repo
 - [ ] Official brand vectors and approved product captures supplied privately.
 - [x] Gold Light Emergence selected; flat V01 rejected.
 - [x] Agent skills and canonical master plan defined.
-- [ ] Shared Blender runtime verified; cinematic V02 approved.
+- [x] Shared Blender runtime verified ([M2 evidence](docs/evidence/m2-runtime-2026-11-24.md)).
+- [ ] Cinematic Gold Light V02 approved.
 - [ ] Silent teaser rendered and approved.
-- [x] MCP core and local Blender smoke adapter source added (fake-worker core tests passed; actual runtime not yet verified).
+- [x] MCP core and local Blender smoke adapter source added (core tests and actual local MCP smoke passed; remote deployment not yet verified).
 - [ ] Reusable production tools fully tested and deployed.
 - [ ] Campaign masters reviewed and released.
 
