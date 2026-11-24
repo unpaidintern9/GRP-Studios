@@ -8,10 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 RUN set -eux; \
     archive="blender-${BLENDER_VERSION}-linux-x64.tar.xz"; \
-    url="https://download.blender.org/release/Blender4.5"; \
+    url="https://mirror.blender.org/release/Blender4.5"; \
     cd /tmp; \
-    curl -fsSLO "$url/$archive"; \
-    curl -fsSLO "$url/blender-${BLENDER_VERSION}.sha256"; \
+    curl -fSL --retry 2 --connect-timeout 20 --max-time 600 -o "$archive" "$url/$archive"; \
+    curl -fSL --retry 2 --connect-timeout 20 --max-time 60 -o "blender-${BLENDER_VERSION}.sha256" "$url/blender-${BLENDER_VERSION}.sha256"; \
     awk -v name="$archive" '$2 == name || $2 == "*" name {print}' "blender-${BLENDER_VERSION}.sha256" > archive.sha256; \
     test -s archive.sha256; sha256sum -c archive.sha256; \
     mkdir -p /opt/blender; tar -xJf "$archive" --strip-components=1 -C /opt/blender; \
