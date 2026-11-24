@@ -132,3 +132,5 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 
 ### V04 creative correction
 - Owner rejected V03 native motion preview after viewing it. See [V04 lookdev](gold-light-v04-lookdev.md). Added native 1080p five-checkpoint scene with geometry-derived macro camera, measured 3D depth, reflective stage, navy atmosphere, and restrained glow. Contact sheet generated from the actual Blender outputs for visual comparison. Keep M3 ACTIVE until real visual and full motion acceptance. No paid GPU allocation or final render authorized by code change.
+
+- V04 v1 native attempt failed before any frame at optional Principled anisotropy socket. Container stopped. Corrected socket lookup and added real Blender scene-construction build smoke using synthetic geometry. V04 v2 has a separate one-use admission and output prefix, preserving failed v1 evidence. Visual acceptance remains open.

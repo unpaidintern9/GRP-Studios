@@ -32,5 +32,6 @@ COPY --chown=10001:10001 plugins/blender/review-contract.mjs plugins/blender/rev
 COPY --chown=10001:10001 scripts/gpu_batch_transfer.py /opt/studio/scripts/gpu_batch_transfer.py
 USER 10001:10001
 RUN node --version && /opt/blender/blender --version && ffmpeg -version && ffprobe -version && python3 -c "import PIL"
+RUN /opt/blender/blender --background --factory-startup --disable-autoexec --python-exit-code 1 --threads 4 --python-expr 'import sys; sys.path.insert(0,"/opt/studio/engine/motion"); from gold_light_v04 import create_scene; names=["silver-monogram","gold-r","silver-wordmark","gold-descriptor"]; boxes=[(270,160,690,410),(710,160,1000,410),(340,480,950,530),(320,600,960,640)]; g={"groups":[{"name":n,"loops":[[[x,y],[X,y],[X,Y],[x,Y]]]} for n,(x,y,X,Y) in zip(names,boxes)]}; s,b=create_scene(g,"synthetic-api-smoke"); s.frame_set(78); print("V04_SCENE_API_SMOKE_PASS")'
 # The DO starts this idle entrypoint only after an explicit one-shot request.
 ENTRYPOINT ["/bin/sleep", "infinity"]

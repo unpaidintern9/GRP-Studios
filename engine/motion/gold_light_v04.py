@@ -18,7 +18,13 @@ def metal(name,gold):
     p.inputs["Base Color"].default_value=(*( (.82,.43,.095) if gold else (.72,.76,.82)),1)
     p.inputs["Metallic"].default_value=1
     p.inputs["Roughness"].default_value=.205 if gold else .19
-    p.inputs["Anisotropic IOR Level"].default_value=.13
+    # Blender builds can expose either anisotropy socket name. Isotropic
+    # metallic specular is valid if neither is available.
+    for name in ("Anisotropic IOR Level","Anisotropic"):
+        socket=p.inputs.get(name)
+        if socket is not None:
+            socket.default_value=.13
+            break
     return m
 
 def rect(name,loc,target,w,h,energy,color):

@@ -1,6 +1,6 @@
 // One fixed private lookdev job. Not a general remote execution interface.
 export const TEMPLATE="gold-light-v02-review-v1";
-export const V04_TEMPLATE="gold-light-v04-lookdev-v1";
+export const V04_TEMPLATE="gold-light-v04-lookdev-v2";
 export const V04_FRAMES=Object.freeze([1,11,20,39,78]);
 export const V03_TEMPLATE="gold-light-v03-motion-v1";
 export const CLIP_TEMPLATE="gold-light-v02-clip-v1";
