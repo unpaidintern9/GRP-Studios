@@ -19,7 +19,8 @@ export function clipOperation(b){
 export function validClipPermit(p,nonce,now){
  return !!p&&Object.keys(p).sort().join(",")==="expiresAt,maxComputeMs,nonce,template"&&p.template===CLIP&&p.nonce===nonce&&Number.isSafeInteger(p.expiresAt)&&p.expiresAt>now&&p.expiresAt<=now+MAX_PLAN_MS+600000&&Number.isSafeInteger(p.maxComputeMs)&&p.maxComputeMs>=STEP_MS&&p.maxComputeMs<=MAX_PLAN_MS;
 }
-export function validSegmentReceipt(r,i){
+export function validSegmentReceipt(r,i,engine="Cycles CPU"){
+ if(!["Cycles CPU","Cycles OptiX"].includes(engine))return false;
  const [first,last]=range(i);
- return r?.status==="native-segment-complete"&&r.segment===i&&r.frameStart===first&&r.frameEnd===last&&r.nativeFrameCount===7&&r.resolution?.join(",")==="1920,1080"&&r.fps===24&&r.samples===12&&r.engine==="Cycles CPU"&&/^4\.5\.17(?:\s|$)/.test(r.version)&&/^[a-f0-9]{64}$/.test(r.geometrySha256)&&r.frameHashes?.length===7&&r.frameHashes.every((x,k)=>x.frame===first+k&&x.file==="frame-"+String(x.frame).padStart(3,"0")+".png"&&/^[a-f0-9]{64}$/.test(x.sha256));
+ return r?.status==="native-segment-complete"&&r.segment===i&&r.frameStart===first&&r.frameEnd===last&&r.nativeFrameCount===7&&r.resolution?.join(",")==="1920,1080"&&r.fps===24&&r.samples===12&&r.engine===engine&&(engine==="Cycles CPU"||Array.isArray(r.devices)&&r.devices.length>0&&r.devices.every(d=>d.type==="OPTIX"&&typeof d.name==="string"&&d.name.length>0&&typeof d.id==="string"&&d.id.length>0))&&/^4\.5\.17(?:\s|$)/.test(r.version)&&/^[a-f0-9]{64}$/.test(r.geometrySha256)&&r.frameHashes?.length===7&&r.frameHashes.every((x,k)=>x.frame===first+k&&x.file==="frame-"+String(x.frame).padStart(3,"0")+".png"&&/^[a-f0-9]{64}$/.test(x.sha256));
 }

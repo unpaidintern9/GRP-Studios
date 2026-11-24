@@ -18,6 +18,7 @@ def main():
         raise RuntimeError("Expected Blender 4.5.17")
     parser=argparse.ArgumentParser()
     parser.add_argument("--segment",type=int,choices=range(15))
+    parser.add_argument("--device",choices=("CPU","OPTIX"),default="CPU")
     args=parser.parse_args(sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else [])
     segment=args.segment
     first,last=(1,105) if segment is None else (segment*7+1,segment*7+7)
@@ -36,6 +37,20 @@ def main():
     scene.render.use_persistent_data=True
     scene.render.threads_mode="FIXED"
     scene.render.threads=4
+    devices=[]
+    if args.device=="OPTIX":
+        prefs=bpy.context.preferences.addons["cycles"].preferences
+        prefs.compute_device_type="OPTIX"
+        prefs.refresh_devices()
+        for device in prefs.devices:
+            device.use=(device.type=="OPTIX")
+            if device.use:
+                devices.append({"name":device.name,"id":device.id,"type":device.type})
+        if not devices:
+            raise RuntimeError("No NVIDIA OptiX device available; CPU fallback forbidden")
+        scene.cycles.device="GPU"
+    else:
+        scene.cycles.device="CPU"
     scene.frame_set(1)
     if segment is None or segment==0:
         bpy.ops.wm.save_as_mainfile(filepath=str(out/"gold-light-v02.blend"))
@@ -51,7 +66,7 @@ def main():
         if not dst.is_file() or dst.stat().st_size<24:
             raise RuntimeError(f"Missing native frame {frame}")
         hashes.append({"frame":frame,"file":dst.name,"sha256":hashlib.sha256(dst.read_bytes()).hexdigest()})
-    receipt={"status":"native-sequence-complete" if segment is None else "native-segment-complete","engine":"Cycles CPU",
+    receipt={"status":"native-sequence-complete" if segment is None else "native-segment-complete","engine":"Cycles OptiX" if args.device=="OPTIX" else "Cycles CPU","devices":devices,
              "version":bpy.app.version_string,"geometrySha256":sha,
              "nativeFrameCount":last-first+1,"segment":segment,"frameStart":first,"frameEnd":last,"frameHashes":hashes,"resolution":[1920,1080],"samples":12,
              "fps":24,"totalFrames":120,"renderSeconds":round(time.monotonic()-started,3),

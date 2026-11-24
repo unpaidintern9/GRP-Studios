@@ -20,3 +20,5 @@
 !plugins/blender/clip-batch-runner.mjs
 !engine/motion/gold_light_v03.py
 !engine/motion/gold_light_v03_post.py
+!scripts/
+!scripts/gpu_batch_transfer.py

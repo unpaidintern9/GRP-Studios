@@ -6,6 +6,7 @@ import { createServer } from "../../mcp/server.mjs";
 import { previewGuard } from "./preview-auth.mjs";
 export { GoldLightRenderer } from "./review-do.mjs";
 export { OnDemandGoldLightRenderer } from "./on-demand-review-do.mjs";
+import { gpuPreflightOperation,publishGpuPreflight } from "./gpu-preflight.mjs";
 import { clipOperation } from "../../plugins/blender/clip-plan.mjs";
 import { operation, QUEUE, V03_TEMPLATE } from "./queue-review-contract.mjs";
 
@@ -13,6 +14,7 @@ export default {
  async queue(batch,env){
   if(batch.queue!==QUEUE)throw Error("Unexpected queue");
   for(const m of batch.messages){
+   if(gpuPreflightOperation(m.body)){await publishGpuPreflight(env);m.ack();continue}
    if(!operation(m.body)&&!clipOperation(m.body)){m.ack();continue}
    await env.ON_DEMAND_RENDERER.getByName(m.body.template===V03_TEMPLATE?"gold-light-v03-motion-singleton":"gold-light-v02-singleton").operate(m.body);
    m.ack();

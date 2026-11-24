@@ -122,3 +122,9 @@ Before each task identify milestone and relevant skill. If owner redirects prior
 - Owner rejected actual V02 MP4 despite successful technical rendering. M3 remains ACTIVE. [Reference reconstruction](gold-light-v03-reference.md) pins the recovered GIF and rejected output, observed timing, color targets and failure modes. New private V03 native motion study uses same official artwork and existing renderer/MCP queue; independent singleton and R2 keys. Source only: no deployment, compute or visual acceptance verified. GPU work remains separate.
 
 - Owner subsequently confirmed the exact cinematic storyboard (SHA-256 2c407f2474f0173f75ce19689b7741f4ab397012571799132da79ac839c16d26); the stationary V03 candidate was superseded without rendering. Revised V03 uses oblique macro camera travel, controlled upright pullback, thicker metallic lettering, physically reflective floor, and centered opening flare. Retains existing exclusion of Earth/tagline pending explicit change. Actual visual and runtime acceptance remains open.
+
+
+### Runpod GPU backend candidate
+- Owner requested GPU integration; prepaid Runpod account connected. Added opt-in OptiX native renderer, strict GPU receipts, private batch transport and quote-based GPU planner. CPU production stays isolated. See [GPU integration](runpod-gpu.md). M8 remains ACTIVE: image build, benchmark, Cloudflare lifecycle and private job publication still require runtime validation. No GPU rented or production deployment in this change.
+
+- Worker secret `RUNPOD_API_KEY` presence verified; read-only v2 credential preflight source added. No secret value retrieved. Deploy and invoke only after active CPU rendering completes; live key scope, GPU image and lifecycle are still unverified.
