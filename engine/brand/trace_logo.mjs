@@ -26,7 +26,10 @@ function classify({W,H,raw}){
  }
  return {mask,components,discarded}
 }
-function trace(mask,W,H,id,epsilon=.65){
+function trace(mask,W,H,id,epsilon=.65,smoothingPasses=0){
+ if(!Number.isInteger(smoothingPasses)||smoothingPasses<0||smoothingPasses>3)throw Error('Invalid smoothing passes');
+ let maxDisplacement=0;
+ function smooth(points){let a=points;for(let pass=0;pass<smoothingPasses;pass++){a=a.map((p,i)=>{let x=0,y=0;for(let k=-2;k<=2;k++){const q=a[(i+k+a.length)%a.length],w=[1,4,6,4,1][k+2]/16;x+=q[0]*w;y+=q[1]*w;}return [x,y]});}for(let i=0;i<a.length;i++)maxDisplacement=Math.max(maxDisplacement,Math.hypot(a[i][0]-points[i][0],a[i][1]-points[i][1]));return a;}
  const pitch=W+1,E=new Map(),delta=[1,pitch,-1,-pitch];let count=0,minx=W,miny=H,maxx=0,maxy=0;
  const add=(v,d)=>E.set(v,(E.get(v)||0)|(1<<d));
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){let i=y*W+x;if(mask[i]!==id)continue;count++;minx=Math.min(minx,x);miny=Math.min(miny,y);maxx=Math.max(maxx,x);maxy=Math.max(maxy,y);let v=y*pitch+x;if(!y||mask[i-W]!==id)add(v,0);if(x===W-1||mask[i+1]!==id)add(v+1,1);if(y===H-1||mask[i+W]!==id)add(v+pitch+1,2);if(!x||mask[i-1]!==id)add(v+pitch,3)}
@@ -44,13 +47,13 @@ function trace(mask,W,H,id,epsilon=.65){
  while(E.size){let start=E.keys().next().value,v=start,d=Math.log2(E.get(v)&-E.get(v)),pts=[],guard=0;
   do{pts.push([v%pitch,Math.floor(v/pitch)]);let b=E.get(v)&~(1<<d);if(b)E.set(v,b);else E.delete(v);v+=delta[d];if(v===start)break;let bits=E.get(v)||0;let nd=[(d+1)%4,d,(d+3)%4,(d+2)%4].find(t=>bits&(1<<t));if(nd===undefined||++guard>100000)throw Error("Invalid contour");d=nd}while(true);
   if(Math.abs(area(pts))<4){tiny+=Math.abs(area(pts));continue}
-  let simple=simplify(pts);if(simple.length<3||Math.sign(area(simple))!==Math.sign(area(pts)))throw Error("Contour simplification");loops.push(simple)
+  let simple=simplify(smooth(pts));if(simple.length<3||Math.sign(area(simple))!==Math.sign(area(pts)))throw Error("Contour simplification");loops.push(simple)
  }
  let xs=Array.from({length:H},()=>[]);
- for(let ps of loops)for(let i=0;i<ps.length;i++){let [x1,y1]=ps[i],[x2,y2]=ps[(i+1)%ps.length];if(y1===y2)continue;if(y1>y2){[x1,x2]=[x2,x1];[y1,y2]=[y2,y1]}for(let y=y1;y<y2;y++)xs[y].push(x1+(y+.5-y1)*(x2-x1)/(y2-y1))}
+ for(let ps of loops)for(let i=0;i<ps.length;i++){let [x1,y1]=ps[i],[x2,y2]=ps[(i+1)%ps.length];if(y1===y2)continue;if(y1>y2){[x1,x2]=[x2,x1];[y1,y2]=[y2,y1]}for(let y=Math.max(0,Math.ceil(y1-.5));y<Math.min(H,Math.ceil(y2-.5));y++)xs[y].push(x1+(y+.5-y1)*(x2-x1)/(y2-y1))}
  let pred=new Uint8Array(W*H);for(let y=0;y<H;y++){let a=xs[y].sort((a,b)=>a-b);if(a.length%2)throw Error("Odd crossings");for(let k=0;k<a.length;k+=2)for(let x=Math.max(0,Math.ceil(a[k]-.5));x<Math.min(W,Math.ceil(a[k+1]-.5));x++)pred[y*W+x]=1}
  let inter=0,union=0,fp=0,fn=0;for(let i=0;i<pred.length;i++){let t=mask[i]===id,p=pred[i]===1;if(t&&p)inter++;if(t||p)union++;if(p&&!t)fp++;if(t&&!p)fn++}
- return {id,count,bbox:[minx,miny,maxx+1,maxy+1],loops,tiny,iou:inter/union,fp,fn,vertices:loops.reduce((s,l)=>s+l.length,0),outer:loops.filter(l=>area(l)>0).length,holes:loops.filter(l=>area(l)<0).length};
+ return {id,count,bbox:[minx,miny,maxx+1,maxy+1],loops,tiny,maxDisplacement,iou:inter/union,fp,fn,vertices:loops.reduce((s,l)=>s+l.length,0),outer:loops.filter(l=>area(l)>0).length,holes:loops.filter(l=>area(l)<0).length};
 }
 function buildGeometry(full,mark){
  if(full.W!==1536||full.H!==934||mark.W!==1536||mark.H!==579)throw Error("Source dimensions mismatch");
@@ -58,7 +61,7 @@ function buildGeometry(full,mark){
  for(let i=0;i<555*full.W;i++){if(f.mask[i]||m.mask[i]){total++;if(f.mask[i]===m.mask[i])same++}}
  if(same!==total)throw Error("Monogram mismatch");
  const names=["silver-monogram","gold-r","silver-wordmark","gold-descriptor"],expected=[2,1,6,16];
- const groups=names.map((name,i)=>{const components=f.components.filter(c=>c.id===i+1);let g=trace(f.mask,full.W,full.H,i+1);
+ const groups=names.map((name,i)=>{const components=f.components.filter(c=>c.id===i+1);let g=trace(f.mask,full.W,full.H,i+1,.16,i<2?3:1);
  if(components.length!==expected[i]||g.outer!==expected[i]||g.iou<.985)throw Error("Candidate validation: "+JSON.stringify({name,n:components.length,outer:g.outer,iou:g.iou}));
  return {...g,name,components:components.length}});
  return {version:1,width:full.W,height:full.H,monogramAgreement:same/total,discardedSmallPixels:f.discarded,groups}

@@ -70,7 +70,7 @@ def load_geometry():
             raise RuntimeError("Invalid contour count")
         for polygon in group["loops"]:
             if len(polygon) < 3 or any(
-                len(p) != 2 or not all(isinstance(v, int) for v in p)
+                len(p) != 2 or not all(isinstance(v, (int,float)) and not isinstance(v,bool) and math.isfinite(v) for v in p)
                 or not (0 <= p[0] <= 1536 and 0 <= p[1] <= 934)
                 for p in polygon
             ):
@@ -281,12 +281,12 @@ def create_scene(geometry, geometry_hash):
     data.dof.use_dof = True
     # Frame 1 = 0 seconds; 120 frames total. The macro path follows the
     # original R bowl and descending leg, then pulls back toward the lockup.
-    camera_key(camera,1,world_point(774,154,.05),1.35,(-.18,.10),65,2.8)
-    camera_key(camera,18,world_point(774,154,.05),1.35,(-.18,.10),65,2.8)
-    camera_key(camera,27,world_point(815,265,.05),1.55,(-.22,.12),65,3.2)
-    camera_key(camera,36,world_point(818,370,.05),2.00,(-.25,.12),60,3.5)
-    camera_key(camera,43,world_point(903,470,.05),2.8,(.24,.05),55,4.0)
-    camera_key(camera,76,world_point(743,318,.05),10.5,(.12,.03),48,8)
+    camera_key(camera,1,world_point(774,154,.05),1.35,(-.18,.10),65,16)
+    camera_key(camera,18,world_point(774,154,.05),1.35,(-.18,.10),65,16)
+    camera_key(camera,27,world_point(780,210,.05),2.6,(-.45,.18),65,3.2)
+    camera_key(camera,36,world_point(810,280,.05),3.5,(-.75,.30),58,3.5)
+    camera_key(camera,43,world_point(873,390,.05),3.7,(.60,.20),55,4.0)
+    camera_key(camera,76,world_point(743,280,.05),9.2,(.12,.03),48,8)
     camera_key(camera,106,(0,0,.03),13.1,(0,0),48,11)
     camera_key(camera,120,(0,0,.03),13.1,(0,0),48,11)
     key = rectangle_light("Large soft silver key",(-3.3,3.5,4.6),(0,.8,0),5.0,2.2,0,(.83,.90,1))
@@ -299,9 +299,9 @@ def create_scene(geometry, geometry_hash):
     animate_energy(front,[(1,0),(43,0),(76,130),(106,520),(120,520)])
     # All three optical layers are original procedural elements. No stock
     # content, synthetic voice, data lines, globe, or generated lettering.
-    optical_card(camera,"Amber halo",.45,.30,.10,(1,.26,.035),2.5,.19,.22)
-    optical_card(camera,"Gold hairline",.44,.33,.020,(1,.55,.10),14,.45,.065)
-    optical_card(camera,"White-gold core",.43,.09,.018,(1,.86,.48),32,.19,.12)
+    optical_card(camera,"Amber halo",1.27,.46,.055,(1,.26,.035),.8,.27,.15)
+    optical_card(camera,"Gold hairline",1.26,.50,.006,(1,.55,.10),7,.45,.055)
+    optical_card(camera,"White-gold core",1.25,.10,.015,(1,.86,.48),15,.19,.12)
     for frame,label in [(18,"Gold light"),(36,"R macro"),(76,"Monogram"),(114,"Full alignment")]:
         scene.timeline_markers.new(label,frame=frame)
     return scene, stats

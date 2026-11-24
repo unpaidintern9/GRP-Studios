@@ -100,6 +100,11 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - Full motion divided into 15 seven-frame native 1080p segments and one verified assembly. Each segment persists immutable private R2 archive, full assembly independently checks all 105 native frame digests and creates 120-frame H.264 MP4 with exact original hold. One singleton container at a time; 10-minute per-step cap, explicit expiring total-budget permit, no automatic retry. Reuses existing queue and DO application, adds named clip image and queue producer for this finite plan. No compute launched by committing.
 - 9 focused plan/admission checks passed in JS runtime; new Docker image, remote queue sequencing, native clip output NOT RUN. Existing v3 native review must complete first. Do not submit clip-start until owner authorized full production budget and build/preflight verified.
 
+### First genuine native render — PASS
+- [Live evidence](evidence/native-review-success-2026-11-24.md): four real Cycles 1080p frames and editable .blend delivered privately, checksum verified; duration 242.197s, permit revoked, zero active/starting instances. Native render execution proven; M3 remains ACTIVE, no 5s clip yet.
+- Visual defects (macro stair-step edges and excessive flare) corrected in production candidate. Actual private source comparison preserves 25 components, each group IoU >=99.24%; revised camera and light parameters still need native visual review.
+- Full clip source/checkpoint controller prepared. Build it using the frozen release branch, keep v3 evidence intact, require explicit full production budget before launching the finite plan. No claim of cinematic acceptance.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 

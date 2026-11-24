@@ -18,9 +18,11 @@ function inputStream(header,env,parts){
  return new ReadableStream({async pull(c){try{const x=await iterator.next();if(x.done)c.close();else c.enqueue(x.value)}catch(e){c.error(e)}},async cancel(){await iterator.return()}});
 }
 export async function clipAlarm(ctx,env){
- const s=await ctx.storage.get(KEY);if(!s||s.activeStep===null)return false;
- await terminal(ctx,env,"failed","Production step deadline reached");
- if(!await stop(ctx))await ctx.storage.setAlarm(Date.now()+15000);
+ const s=await ctx.storage.get(KEY);if(!s||(s.activeStep===null&&!s.stopPending))return false;
+ if(s.state==="running")await terminal(ctx,env,"failed","Production step deadline reached");
+ const stopped=await stop(ctx);
+ await ctx.storage.transaction(async tx=>{const v=await tx.get(KEY);if(v)await tx.put(KEY,{...v,stopPending:!stopped})});
+ if(!stopped)await ctx.storage.setAlarm(Date.now()+15000);
  return true;
 }
 export async function operateClip(ctx,env,body){
@@ -58,7 +60,7 @@ export async function operateClip(ctx,env,body){
   output={index:step,sha256:hash,bytes:bytes.length};
  }catch(e){failure=String(e).slice(0,700);console.error("Clip step failed",step,failure)}
  finally{clearTimeout(timer);stopped=await stop(ctx);if(stopped)await ctx.storage.deleteAlarm()}
- if(!output||!stopped)return terminal(ctx,env,"failed",stopped?(failure??"Missing output"):"Container shutdown unverified; safety alarm retained");
+ if(!output||!stopped){if(!stopped){await ctx.storage.transaction(async tx=>{const v=await tx.get(KEY);if(v)await tx.put(KEY,{...v,stopPending:true})});await ctx.storage.setAlarm(Date.now()+15000)}return terminal(ctx,env,"failed",stopped?(failure??"Missing output"):"Container shutdown unverified; safety alarm retained");}
  const next=await ctx.storage.transaction(async tx=>{const v=await tx.get(KEY);if(v?.state!=="running"||v.activeStep!==step)return v;const x={...v,spentMs:v.spentMs+Math.max(0,Date.now()-started),activeStep:null,next:step+1};if(step<SEGMENTS){x.segments=[...v.segments,output];x.completedNativeFrames=x.segments.length*7}else{Object.assign(x,{state:"succeeded",finishedAt:now(),artifactKey:CLIP_ARCHIVE,sha256:output.sha256,bytes:output.bytes,creativeStatus:"unapproved-five-second-clip"})}await tx.put(KEY,x);return x});
  await publish(env,next);
  if(next.state==="running"){try{await permit(env,body.nonce);await env.RENDER_QUEUE.send({operation:"clip-step",template:CLIP,nonce:body.nonce,segment:next.next})}catch(e){return terminal(ctx,env,"failed","Next step not submitted: "+String(e).slice(0,250))}}

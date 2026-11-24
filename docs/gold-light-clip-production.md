@@ -5,3 +5,6 @@ This is source-only. The active v3 review uses the previous pinned image and mus
 
 ## Checkpointed production candidate
 The complete 105-frame motion pass is divided into 15 fixed seven-frame segments, each separately bounded to 10 minutes, followed by a verified assembly step. Private R2 archives are immutable, hash checked, and assembly verifies frame completeness and shared geometry. The single DO serializes the plan, checks an explicit private budget permit before every step, uses no public endpoints or retry, and destroys the container between steps. The maximum permitted plan is 160 minutes including assembly; actual authorization must set a measured budget no larger than that. This replaces the one-shot runtime assumption; the one-shot code is retained for local use. Remote source is not yet build/runtime verified. No clip job submitted.
+
+## Native review result and corrective geometry
+See [actual native review evidence](evidence/native-review-success-2026-11-24.md). Four real frames rendered and private archive verified; macro contours and opening flare visibly need correction. Production source now applies bounded subpixel smoothing with actual source-mask verification, revised macro framing and narrowed flare. These changes are not yet render-verified. Four-frame QA is not the requested final clip.
