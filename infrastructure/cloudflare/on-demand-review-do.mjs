@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { INPUTS,TEMPLATE,JOB_KEY,OUTPUT_KEY,JOB_TIMEOUT_MS,MAX_ARCHIVE_BYTES } from "../../plugins/blender/review-contract.mjs";
-import { operation,permitValid,PREFLIGHT_KEY,STATUS_KEY,PERMIT_KEY } from "./queue-review-contract.mjs";
+import { operation,permitValid,reviewKeys,V03_TEMPLATE } from "./queue-review-contract.mjs";
 import {clipOperation} from "../../plugins/blender/clip-plan.mjs";
 import {operateClip,clipAlarm} from "./clip-production.mjs";
 const now=()=>new Date().toISOString();
@@ -12,37 +12,37 @@ export class OnDemandGoldLightRenderer extends DurableObject {
  async #receipt(key,body){await this.env.MEDIA.put(key,JSON.stringify(body),{httpMetadata:{contentType:"application/json"}})}
  async #state(){return await this.ctx.storage.get("review-v3")}
  async status(){return (await this.#state())??{state:"not-started",template:TEMPLATE}}
- async #finish(next){const result=await this.ctx.storage.transaction(async tx=>{const s=await tx.get("review-v3");if(s?.state!=="running")return s;const v={...s,...next,finishedAt:now()};await tx.put("review-v3",v);return v});if(result)await this.#receipt(STATUS_KEY,result);return result}
+ async #finish(next){const result=await this.ctx.storage.transaction(async tx=>{const s=await tx.get("review-v3");if(s?.state!=="running")return s;const v={...s,...next,finishedAt:now()};await tx.put("review-v3",v);return v});if(result)await this.#receipt(reviewKeys(result.template).status,result);return result}
  async #stop(){const c=this.ctx.container;if(!c)return false;try{await c.destroy();return !c.running}catch(e){return !c.running}}
  async alarm(){if(await clipAlarm(this.ctx,this.env))return;await this.#finish({state:"failed",detail:"Deadline reached"});if(!await this.#stop())await this.ctx.storage.setAlarm(Date.now()+15000)}
  async operate(body){
   if(clipOperation(body))return operateClip(this.ctx,this.env,body);
-  const op=operation(body);if(!op)throw Error("Invalid fixed operation");
-  if(op==="preflight"){const c=this.ctx.container;if(!c?.images?.base||c.running)throw Error("On-demand container not idle/configured");await this.#assets();const receipt={status:"pass",template:TEMPLATE,image:c.images.base,sourceCount:INPUTS.length,running:false,renderEnabled:this.env.STUDIO_QUEUE_RENDER_ENABLED==="true",at:now()};await this.#receipt(PREFLIGHT_KEY,receipt);return receipt}
+  const op=operation(body);if(!op)throw Error("Invalid fixed operation");const template=body.template,keys=reviewKeys(template);
+  if(op==="preflight"){const c=this.ctx.container;if(!c?.images?.[keys.image]||c.running)throw Error("On-demand container not idle/configured");await this.#assets();const receipt={status:"pass",template,image:c.images[keys.image],sourceCount:INPUTS.length,running:false,renderEnabled:this.env.STUDIO_QUEUE_RENDER_ENABLED==="true",at:now()};await this.#receipt(keys.preflight,receipt);return receipt}
   if(op==="cancel"){const s=await this.#state();if(s?.state!=="running")return this.status();await this.#finish({state:"cancelled",detail:"Operator cancellation"});if(await this.#stop())await this.ctx.storage.deleteAlarm();return this.status()}
   if(this.env.STUDIO_QUEUE_RENDER_ENABLED!=="true")throw Error("Queue render disabled");
-  const permit=await this.env.MEDIA.get(PERMIT_KEY);if(!permit||!permitValid(await permit.json(),body.nonce,Date.now()))throw Error("Missing or expired private permit");
-  const claimed=await this.ctx.storage.transaction(async tx=>{if(await tx.get("review-v3"))return false;await tx.put("review-v3",{id:JOB_KEY,template:TEMPLATE,state:"running",createdAt:now(),deadline:Date.now()+JOB_TIMEOUT_MS});return true});if(!claimed)return this.status();
-  try{await this.ctx.storage.setAlarm(Date.now()+JOB_TIMEOUT_MS);await this.#receipt(STATUS_KEY,await this.#state())}catch(e){await this.#finish({state:"failed",detail:"Safety setup failed"});throw e}
+  const permit=await this.env.MEDIA.get(keys.permit);if(!permit||!permitValid(await permit.json(),body.nonce,Date.now(),template))throw Error("Missing or expired private permit");
+  const claimed=await this.ctx.storage.transaction(async tx=>{if(await tx.get("review-v3"))return false;await tx.put("review-v3",{id:template===V03_TEMPLATE?V03_TEMPLATE:JOB_KEY,template,state:"running",createdAt:now(),deadline:Date.now()+JOB_TIMEOUT_MS});return true});if(!claimed)return this.status();
+  try{await this.ctx.storage.setAlarm(Date.now()+JOB_TIMEOUT_MS);await this.#receipt(keys.status,await this.#state())}catch(e){await this.#finish({state:"failed",detail:"Safety setup failed"});throw e}
   // Await from the queue invocation rather than relying on waitUntil to keep a long render alive.
   const abort=new AbortController();const timer=setTimeout(()=>abort.abort(),JOB_TIMEOUT_MS-1000);let next={state:"failed",detail:"Render did not complete"};
   try{
    const assets=await this.#assets();const c=this.ctx.container;
    if(!c)throw Error("Container binding missing");
-   if(!c.images?.base)throw Error("Container base image missing from Worker version");
+   if(!c.images?.[keys.image])throw Error("Container base image missing from Worker version");
    if(c.running)throw Error("Container already running");
    if((await this.#state())?.state!=="running")throw Error("Review claim no longer running");
    if(abort.signal.aborted)throw Error("Review deadline expired before start");
    // Independent in-container lifetime limit even if the Worker is interrupted.
-   c.start({image:c.images.base,instance:"standard-4",enableInternet:false,entrypoint:["/usr/bin/timeout","--signal=KILL","600s","/bin/sleep","infinity"]});
+   c.start({image:c.images[keys.image],instance:"standard-4",enableInternet:false,entrypoint:["/usr/bin/timeout","--signal=KILL","600s","/bin/sleep","infinity"]});
    await c.setInactivityTimeout(JOB_TIMEOUT_MS);
-   const proc=await c.exec(["/usr/local/bin/node","/opt/studio/plugins/blender/review-runner.mjs"],{stdin:new Response(JSON.stringify({template:TEMPLATE,assets})).body,stdout:"pipe",stderr:"pipe",cwd:"/opt/studio",user:"10001:10001",signal:abort.signal});
+   const proc=await c.exec(["/usr/local/bin/node","/opt/studio/plugins/blender/review-runner.mjs"],{stdin:new Response(JSON.stringify({template,assets})).body,stdout:"pipe",stderr:"pipe",cwd:"/opt/studio",user:"10001:10001",signal:abort.signal});
    const [archive,stderr,exit]=await Promise.all([bounded(proc.stdout,MAX_ARCHIVE_BYTES),bounded(proc.stderr,64000),proc.exitCode]);
    if(exit!==0||archive.length<100||archive[0]!==80||archive[1]!==75||archive[2]!==3||archive[3]!==4)throw Error("Render process failed: "+new TextDecoder().decode(stderr).slice(-500));
    if(abort.signal.aborted||(await this.#state())?.state!=="running")throw Error("Review no longer active");
-   const digest=await sha(archive);const stored=await this.env.MEDIA.put(OUTPUT_KEY,archive,{onlyIf:{etagDoesNotMatch:"*"},httpMetadata:{contentType:"application/zip"},customMetadata:{sha256:digest,template:TEMPLATE,review:"unapproved"}});if(!stored)throw Error("Existing artifact not overwritten");
-   const readback=await this.env.MEDIA.get(OUTPUT_KEY);if(!readback||readback.size!==archive.length||await sha(await readback.arrayBuffer())!==digest)throw Error("Output checksum mismatch");
-   next={state:"succeeded",artifactKey:OUTPUT_KEY,sha256:digest,bytes:archive.length,creativeStatus:"unapproved-lookdev"};
+   const digest=await sha(archive);const stored=await this.env.MEDIA.put(keys.output,archive,{onlyIf:{etagDoesNotMatch:"*"},httpMetadata:{contentType:"application/zip"},customMetadata:{sha256:digest,template,review:"unapproved"}});if(!stored)throw Error("Existing artifact not overwritten");
+   const readback=await this.env.MEDIA.get(keys.output);if(!readback||readback.size!==archive.length||await sha(await readback.arrayBuffer())!==digest)throw Error("Output checksum mismatch");
+   next={state:"succeeded",artifactKey:keys.output,sha256:digest,bytes:archive.length,creativeStatus:"unapproved-lookdev"};
   }catch(e){console.error("Private review failure",String(e).slice(0,600));next={state:"failed",detail:String(e).slice(0,600)}}
   finally{clearTimeout(timer);const stopped=await this.#stop();if(stopped)await this.ctx.storage.deleteAlarm();else next={state:"failed",detail:"Container shutdown not verified; alarm retained"};await this.#finish(next)}
   return this.status();
