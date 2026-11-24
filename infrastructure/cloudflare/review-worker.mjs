@@ -8,7 +8,7 @@ export { GoldLightRenderer } from "./review-do.mjs";
 export { OnDemandGoldLightRenderer } from "./on-demand-review-do.mjs";
 import { gpuPreflightOperation,publishGpuPreflight } from "./gpu-preflight.mjs";
 import { clipOperation } from "../../plugins/blender/clip-plan.mjs";
-import { operation, QUEUE, V03_TEMPLATE } from "./queue-review-contract.mjs";
+import { operation, QUEUE, V03_TEMPLATE, V04_TEMPLATE } from "./queue-review-contract.mjs";
 
 export default {
  async queue(batch,env){
@@ -16,7 +16,7 @@ export default {
   for(const m of batch.messages){
    if(gpuPreflightOperation(m.body)){await publishGpuPreflight(env);m.ack();continue}
    if(!operation(m.body)&&!clipOperation(m.body)){m.ack();continue}
-   await env.ON_DEMAND_RENDERER.getByName(m.body.template===V03_TEMPLATE?"gold-light-v03-motion-singleton":"gold-light-v02-singleton").operate(m.body);
+   await env.ON_DEMAND_RENDERER.getByName(m.body.template===V04_TEMPLATE?"gold-light-v04-lookdev-v2-singleton":m.body.template===V03_TEMPLATE?"gold-light-v03-motion-singleton":"gold-light-v02-singleton").operate(m.body);
    m.ack();
   }
  },
@@ -31,6 +31,7 @@ export default {
    });
    register("gold_light_review_status","Read one private Gold Light review job's actual state. Does not start compute.",true,()=>stub().status());
    register("gold_light_v03_motion_status","Read private V03 native motion review status; no compute.",true,async()=>{const o=await env.MEDIA.get("reviews/gold-light-v03-motion-v1/status.json");return o?o.json():{state:"not-started",template:V03_TEMPLATE}});
+   register("gold_light_v04_lookdev_status","Read private V04 native HD lookdev status; no compute.",true,async()=>{const o=await env.MEDIA.get("reviews/gold-light-v04-lookdev-v2/status.json");return o?o.json():{state:"not-started",template:V04_TEMPLATE}});
    return server;
   });
   const response=await handler(request,env,ctx);const headers=new Headers(response.headers);headers.set("Cache-Control","no-store");
