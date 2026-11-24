@@ -83,6 +83,10 @@ M2 is complete; M3 is the immediate critical path. M4 source implementation may 
 - Default scheduling unexpectedly requested one idle instance; immediately set dedicated application's max_instances=0. Verified zero desired/maximum/actual/starting/active instances. **Do not redeploy existing frozen config without correcting scheduling**; it can recreate idle compute. Transient startup billing unverified.
 - M3/M8 remain ACTIVE. Next: correct and verify on-demand lifecycle, configure protected machine operator access, verify cancellation/deadline/teardown, then obtain explicit bounded first-render approval and produce four real private keyframes.
 
+### On-demand correction candidate
+- New SQLite DO class and replacement durable_object scheduling application use the previously published digest-pinned Blender image. Old app remains separate and zero capacity. No public routes or HTTP render tools. Fixed authenticated-account queue operation and R2 permit, one-use admission, deadline, independent PID 1 timeout; STUDIO_QUEUE_RENDER_ENABLED=false. Preflight does not start compute.
+- Next: deploy corrected candidate only; verify zero instances, disabled render admission and private preflight receipt before enabling any render. Actual runtime not yet verified.
+
 ## Workstream boundaries
 Skills and brand policy are reusable source. Plugins expose narrow versioned interfaces and independent dependencies. Asset/media library private; local renders outside public Git. A future worker runs trusted templates only with bounded resources and no Terminal access. Team sharing requires explicit auth and access policy. External services optional, never default paid fallback.
 

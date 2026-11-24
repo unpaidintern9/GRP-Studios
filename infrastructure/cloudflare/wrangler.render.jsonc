@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "grp-studios-mcp",
+  "name": "grp-studios",
   "main": "review-worker.mjs",
   "compatibility_date": "2026-11-24",
   "compatibility_flags": [
@@ -12,7 +12,8 @@
     "enabled": true
   },
   "vars": {
-    "STUDIO_RENDER_ENABLED": "false"
+    "STUDIO_RENDER_ENABLED": "false",
+    "STUDIO_QUEUE_RENDER_ENABLED": "false"
   },
   "r2_buckets": [
     {
@@ -25,6 +26,10 @@
       {
         "name": "REVIEW_RENDERER",
         "class_name": "GoldLightRenderer"
+      },
+      {
+        "name": "ON_DEMAND_RENDERER",
+        "class_name": "OnDemandGoldLightRenderer"
       }
     ]
   },
@@ -34,22 +39,44 @@
       "new_sqlite_classes": [
         "GoldLightRenderer"
       ]
+    },
+    {
+      "tag": "review-v2-on-demand",
+      "new_sqlite_classes": [
+        "OnDemandGoldLightRenderer"
+      ]
     }
   ],
   "containers": [
     {
-      "name": "grp-studios-render-worker",
-      "class_name": "GoldLightRenderer",
-      "scheduling_policy": "default",
-      "image": "../blender/Dockerfile.service",
-      "image_build_context": "../..",
-      "max_instances": 1,
-      "instance_type": "standard-4",
+      "name": "grp-studios-render-on-demand",
+      "class_name": "OnDemandGoldLightRenderer",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "base": {
+          "image": "registry.cloudflare.com/4503c227327d5bf330cad259bf0b758e/grp-studios-render-worker@sha256:395c73946a0cbb29eef5997634d9642949565c5e58ab4a2b1574f54aa24452c4"
+        }
+      },
+      "ssh": {
+        "enabled": false
+      },
       "observability": {
         "logs": {
           "enabled": true
         }
       }
     }
-  ]
+  ],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "grp-studios-render-queue",
+        "max_batch_size": 1,
+        "max_batch_timeout": 0,
+        "max_retries": 0,
+        "max_concurrency": 1,
+        "dead_letter_queue": "grp-studios-render-dlq"
+      }
+    ]
+  }
 }

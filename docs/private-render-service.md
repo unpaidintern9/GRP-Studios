@@ -26,3 +26,6 @@ See [verified build evidence](evidence/render-package-acceptance-2026-11-24.md).
 
 ## Live deployment and safety hold
 [Live evidence](evidence/cloudflare-render-deployment-2026-11-24.md). Worker and image deployed successfully under the actual dashboard name grp-studios. The earlier assumption that default scheduling would start only on invocation was false: deployment requested one idle instance. Live app was reduced to zero capacity and independently verified stopped. Render admission remains false; no operator secret or public route. Before redeploying, fix and verify the lifecycle configuration, since the frozen release still requests max_instances=1. No private render has executed.
+
+## On-demand correction candidate
+New class OnDemandGoldLightRenderer and new application grp-studios-render-on-demand select the existing registry image at runtime under durable_object scheduling. The old class and binding remain but the old app is omitted from new config to avoid restoring capacity. Existing app remains zero-capacity. Use Cloudflare account-authenticated queue for fixed operations and private R2 receipts, with an additional expiring nonce permit for one render and rendering disabled by default. No public start/cancel route. No arbitrary commands. New path is not yet runtime tested.
