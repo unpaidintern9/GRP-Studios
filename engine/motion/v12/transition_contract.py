@@ -6,16 +6,16 @@ whole-layer dissolve. Sample both envelopes for every native frame.
 """
 FPS=24
 TOTAL=168
-FEATHER=.16
-EARTH_START,EARTH_END=97,134
-STAGE_START,STAGE_END=105,142
+FEATHER=.34
+EARTH_START,EARTH_END=91,133
+STAGE_START,STAGE_END=99,141
 
 def ease(a,b,t):
     if b<=a:raise ValueError("Invalid interval")
     u=max(0.,min(1.,(t-a)/(b-a)))
     return u**3*(10+u*(-15+6*u))
 
-def head(f,a,b,top=.46):
+def head(f,a,b,top=.24):
     return -FEATHER/2+(top+FEATHER)*ease(a,b,f)
 
 def reveal(y,h):
@@ -52,8 +52,8 @@ def validate():
             if y<=.195:
                 assert q["uncovered"]<.12
     for y in (0,.05,.1,.15,.195):
-        assert pixel(97,y)["visible_earth"]==0
-        assert pixel(142,y)["visible_earth"]==1
+        assert pixel(EARTH_START,y)["visible_earth"]==0
+        assert pixel(STAGE_END,y)["visible_earth"]==1
     return {"earthFrames":[EARTH_START,EARTH_END],"stageFrames":[STAGE_START,STAGE_END],
             "finalHorizonY":.195,"transitionSeconds":(STAGE_END-EARTH_START)/FPS,
             "totalFrames":TOTAL,"creativeApproval":False}
