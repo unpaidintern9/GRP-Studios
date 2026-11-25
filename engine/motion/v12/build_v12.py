@@ -53,7 +53,7 @@ def interior_points(p,kd,step=.013):
             x=math.ceil(a/step)*step
             while x<b:
                 v=Vector((x,y))
-                if kd.find(Vector((x,y,0)))[2]>.003:yield v
+                if kd.find(Vector((x,y,0)))[2]>.008:yield v
                 x+=step
         y+=step
 
@@ -63,17 +63,33 @@ def planar_mesh(p):
     kd.balance()
     N=len(p);points=p+list(interior_points(p,kd))
     edges=[(i,(i+1)%N) for i in range(N)]
-    v,e,f,ov,oe,of=delaunay_2d_cdt(points,edges,[list(range(N))],1,1e-6,True)
+    v,e,f,ov,oe,of=delaunay_2d_cdt(points,[],[list(range(N))],0,1e-5,True)
     if not f or any(len(t)!=3 for t in f):raise RuntimeError("Expected constrained triangles")
     tris=[]
-    for t in f:
+    for t,original_faces in zip(f,of):
+        if 0 not in original_faces:continue
         a,b,c=[v[i] for i in t];cross=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)
-        if abs(cross)<1e-12:raise RuntimeError("Degenerate constrained triangle")
+        if abs(cross)<1e-18:raise RuntimeError("Zero area constrained triangle: "+repr((tuple(t),[tuple(z) for z in (a,b,c)],cross)))
         tris.append(tuple(t if cross>0 else t[::-1]))
+    if not tris:raise RuntimeError("No nondegenerate constrained triangles")
+    used=sorted({i for t in tris for i in t});remap={i:j for j,i in enumerate(used)}
+    v=[v[i] for i in used];tris=[tuple(remap[i] for i in t) for t in tris]
     edge_count=Counter(tuple(sorted((a,b))) for t in tris for a,b in zip(t,t[1:]+t[:1]))
     if max(edge_count.values())>2:raise RuntimeError("Nonmanifold planar mesh")
     boundary={i for e,n in edge_count.items() if n==1 for i in e}
     if len(boundary)<3:raise RuntimeError("Missing exact boundary")
+    boundary_edges=[e for e,n in edge_count.items() if n==1]
+    neighbors={i:[] for i in boundary}
+    for a,b in boundary_edges:neighbors[a].append(b);neighbors[b].append(a)
+    if any(len(q)!=2 for q in neighbors.values()):raise RuntimeError("Boundary not a simple loop")
+    visited=set();stack=[next(iter(boundary))]
+    while stack:
+        i=stack.pop()
+        if i in visited:continue
+        visited.add(i);stack.extend(j for j in neighbors[i] if j not in visited)
+    if visited!=boundary:raise RuntimeError("Extra native boundary loop")
+    if max(kd.find(Vector((v[i].x,v[i].y,0)))[2] for i in boundary)>.004:raise RuntimeError("Boundary escaped source corridor")
+    if len(v)-len(edge_count)+len(tris)!=1:raise RuntimeError("Invalid planar topology")
     heights=[]
     for i,x in enumerate(v):
         d=0. if i in boundary else kd.find(Vector((x.x,x.y,0)))[2]
@@ -120,7 +136,14 @@ def sculpt(g):
     expected=mask([sampled(l) for l in curves],W,H);actual=rasterize(vertices,caps)
     union=sum((a|b).bit_count() for a,b in zip(expected,actual))
     iou=sum((a&b).bit_count() for a,b in zip(expected,actual))/union
-    if iou<.998:raise RuntimeError("Native sculpted-cap projection mismatch "+str(iou))
+    if iou<.998:
+        print("CAP_DIAGNOSTIC",name,len(vertices),len(caps),sum(a.bit_count() for a in expected),sum(a.bit_count() for a in actual),sum((a&b).bit_count() for a,b in zip(expected,actual)),flush=True)
+        arr=np.zeros((H,W,3),dtype=np.uint8)
+        for y,(a,b) in enumerate(zip(expected,actual)):
+            arr[y,:,0]=np.unpackbits(np.frombuffer(a.to_bytes(W//8,"little"),np.uint8),bitorder="little")*255
+            arr[y,:,1]=np.unpackbits(np.frombuffer(b.to_bytes(W//8,"little"),np.uint8),bitorder="little")*255
+        np.save("/tmp/grp-v12/cap-diagnostic.npy",arr)
+        raise RuntimeError("Native sculpted-cap projection mismatch "+str(iou))
     old=ob.data;new=bpy.data.meshes.new(name+" V12 inset sculpted crown")
     new.from_pydata(vertices,[],faces)
     if new.validate(verbose=False):raise RuntimeError("Unexpected native mesh correction")
