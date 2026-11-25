@@ -106,9 +106,13 @@ def apply(path):
             bpy.data.curves.remove(c);result[name]={"status":"retained verified baseline","reason":str(e)};continue
         if check["nativeFillIoU"]<.998:
             bpy.data.curves.remove(c);result[name]={"status":"retained verified baseline","reason":"native fill mismatch",**check};continue
-        ob.data=c
-        try:bevel=bevel_guard(ob)
-        except Exception as e:
-            ob.data=original;bpy.data.curves.remove(c);result[name]={"status":"retained verified baseline","reason":str(e),**check,**fair};continue
-        result[name]={"status":"native fill and bevel checked, visual review required","sourceCandidateRasterIoU":g["check"]["iou"],**check,**fair,**bevel}
+        ob.data=c;bevel=None;attempts=[]
+        for depth in (.012,.008,.006,.004):
+            c.bevel_depth=depth
+            try:
+                bevel=bevel_guard(ob);bevel["bevelDepth"]=depth;break
+            except RuntimeError as e:attempts.append({"depth":depth,"reason":str(e)})
+        if bevel is None:
+            ob.data=original;bpy.data.curves.remove(c);result[name]={"status":"retained verified baseline","reason":"No safe rounded bevel",**check,**fair,"bevelAttempts":attempts};continue
+        result[name]={"status":"native fill and bevel checked, visual review required","sourceCandidateRasterIoU":g["check"]["iou"],**check,**fair,**bevel,"bevelAttempts":attempts}
     return result
