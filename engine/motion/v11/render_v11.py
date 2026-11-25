@@ -15,7 +15,7 @@ devices=[d for d in prefs.devices if d.type=="OPTIX"]
 if not devices:raise RuntimeError("No OptiX, refuse CPU fallback")
 for d in prefs.devices:d.use=d.type=="OPTIX"
 s.cycles.device="GPU";s.cycles.denoiser="OPTIX";s.cycles.use_denoising=True;s.cycles.use_adaptive_sampling=True;s.render.use_persistent_data=True
-w,h,samples,threshold=(1280,720,24,.04) if a.mode=="checkpoints" else (1920,1080,48,.025)
+w,h,samples,threshold=(1280,720,24,.04) if a.mode=="checkpoints" else (1920,1080,32,.032)
 s.render.resolution_x=w;s.render.resolution_y=h;s.render.resolution_percentage=100;s.cycles.samples=samples;s.cycles.adaptive_threshold=threshold;s.render.engine="CYCLES"
 s.render.image_settings.file_format="PNG";s.render.image_settings.color_mode="RGB";s.render.image_settings.color_depth="8"
 root=Path(a.output).resolve();root.mkdir(parents=True,exist_ok=False);frames=root/"frames";frames.mkdir()
