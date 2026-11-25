@@ -23,3 +23,15 @@
 !scripts/
 !scripts/gpu_batch_transfer.py
 !engine/motion/gold_light_v04.py
+!engine/motion/gold_light_v05.py
+!engine/motion/gold_light_v05_post.py
+!engine/motion/gold_light_v06.py
+!engine/motion/gold_light_v06_contours.py
+!engine/motion/gold_light_v06_closing.py
+!engine/motion/gold_light_v06_render.py
+!engine/motion/gold_light_v07.py
+!engine/motion/gold_light_v07_beats.py
+!engine/motion/gold_light_v07_render.py
+!engine/motion/gold_light_v08.py
+!engine/motion/gold_light_v08_beats.py
+!engine/motion/gold_light_v08_render.py
