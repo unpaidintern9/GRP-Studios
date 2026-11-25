@@ -38,6 +38,50 @@ def fill_parity(curve,curves):
         return {"nativeFillIoU":inter/union,"triangles":count}
     finally:
         ev.to_mesh_clear();bpy.data.objects.remove(o,do_unlink=True);bpy.data.curves.remove(c)
+def fair_silver_top_serif(curves):
+    # Exact private candidate is hash-pinned. The P's nearly horizontal top
+    # serif has many 1px reversals in the raster alpha, producing metre-scale
+    # bevel miters despite a valid planar fill. Replace that one flat run
+    # with a C1-compatible straight cubic; leave every other curve intact.
+    import copy
+    q=copy.deepcopy(curves);loop=q[1];i,j=15,71
+    a,b=loop[i][1],loop[j][1]
+    if len(q)!=2 or len(loop)!=276 or not (952<a[0]<953 and 1096<b[0]<1097 and 116<a[1]<117 and 116<b[1]<117):
+        raise RuntimeError("Pinned silver serif geometry changed")
+    if any(not (951<p[1][0]<1098 and 115<p[1][1]<117.1) for p in loop[i:j+1]):
+        raise RuntimeError("Serif cleanup exceeds local source corridor")
+    v=[(b[k]-a[k])/3 for k in (0,1)]
+    loop[i][2]=[a[k]+v[k] for k in (0,1)]
+    loop[j][0]=[b[k]-v[k] for k in (0,1)]
+    q[1]=loop[:i+1]+loop[j:]
+    ref=mask([sampled(l) for l in curves],W,H);out=mask([sampled(l) for l in q],W,H)
+    inter=sum((a&b).bit_count() for a,b in zip(ref,out));union=sum((a|b).bit_count() for a,b in zip(ref,out))
+    if inter/union<.998:raise RuntimeError("Serif fairing changed too much of the source silhouette")
+    return q,{"serifFairingIoU":inter/union,"removedRasterReversalKnots":j-i-1}
+
+def bevel_guard(ob):
+    # Planar fill alone cannot detect bevel spikes. Compare every actual
+    # evaluated 3D vertex to the curve's sampled outline in local XY.
+    from mathutils.kdtree import KDTree
+    pts=[]
+    for sp in ob.data.splines:
+        p=sp.bezier_points
+        for i,a in enumerate(p):
+            b=p[(i+1)%len(p)]
+            n=max(8,int((a.co-b.co).length/.0015)+1)
+            for j in range(n):
+                t=j/n;u=1-t;v=u**3*a.co+3*u*u*t*a.handle_right+3*u*t*t*b.handle_left+t**3*b.co
+                pts.append((v.x,v.y,0.0))
+    kd=KDTree(len(pts))
+    for i,p in enumerate(pts):kd.insert(p,i)
+    kd.balance()
+    bpy.context.view_layer.update();ev=ob.evaluated_get(bpy.context.evaluated_depsgraph_get());m=ev.to_mesh()
+    try:
+        worst=max(kd.find((v.co.x,v.co.y,0.0))[2] for v in m.vertices)
+        if worst>.055:raise RuntimeError("Native bevel displacement exceeds limit: "+str(worst))
+        return {"maximumNativeBevelDisplacement":worst,"vertices":len(m.vertices)}
+    finally:ev.to_mesh_clear()
+
 def apply(path):
     raw=Path(path).read_bytes()
     if hashlib.sha256(raw).hexdigest()!=CANDIDATE:raise RuntimeError("Wrong private V11 geometry candidate")
@@ -49,17 +93,22 @@ def apply(path):
         if g["candidateStatus"]!="RASTER_PARITY_ONLY":
             result[name]={"status":"retained verified baseline","reason":"new raster fit did not meet acceptance"};continue
         if g["check"]["iou"]<.992 or not g["check"]["topology"] or g["check"]["crossing"]:raise RuntimeError("Raster guard failed")
-        original=ob.data;c=original.copy();c.splines.clear();c.resolution_u=64;c.render_resolution_u=64
-        c.bevel_resolution=16;c.extrude=.18;c.bevel_depth=.012
-        for loop in g["curves"]:
+        original=ob.data;curves=g['curves'];fair={}
+        if name=='silver-monogram':curves,fair=fair_silver_top_serif(curves)
+        c=original.copy();c.splines.clear();c.resolution_u=24;c.render_resolution_u=24
+        c.bevel_resolution=8;c.extrude=.18;c.bevel_depth=.012
+        for loop in curves:
             sp=c.splines.new("BEZIER");sp.bezier_points.add(len(loop)-1);sp.use_cyclic_u=True;sp.use_smooth=True
             for p,(left,center,right) in zip(sp.bezier_points,loop):
                 p.handle_left_type="FREE";p.handle_right_type="FREE";p.co=world_point(*center);p.handle_left=world_point(*left);p.handle_right=world_point(*right)
-        try:check=fill_parity(c,g["curves"])
+        try:check=fill_parity(c,curves)
         except Exception as e:
             bpy.data.curves.remove(c);result[name]={"status":"retained verified baseline","reason":str(e)};continue
         if check["nativeFillIoU"]<.998:
             bpy.data.curves.remove(c);result[name]={"status":"retained verified baseline","reason":"native fill mismatch",**check};continue
         ob.data=c
-        result[name]={"status":"native fill checked, visual review required","sourceRasterIoU":g["check"]["iou"],**check}
+        try:bevel=bevel_guard(ob)
+        except Exception as e:
+            ob.data=original;bpy.data.curves.remove(c);result[name]={"status":"retained verified baseline","reason":str(e),**check,**fair};continue
+        result[name]={"status":"native fill and bevel checked, visual review required","sourceCandidateRasterIoU":g["check"]["iou"],**check,**fair,**bevel}
     return result
