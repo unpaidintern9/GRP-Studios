@@ -1,5 +1,5 @@
 /* V11 precision curves from the original RGBA alpha isocontour.
- * The two sub-four-pixel raster pinholes are discarded, not genuine counters.
+ * Raster pinholes below eight square pixels are discarded, not genuine counters.
  * No native mesh fill or creative approval is inferred from mask parity.
  */
 const NAMES=["silver-monogram","gold-r","silver-wordmark","gold-descriptor"],OUTER=[2,1,6,16],HOLES=[0,0,1,7];
@@ -21,7 +21,7 @@ function alphaContours(W,H,rgba,mask,id){
  const seen=new Set(),loops=[],removed=[];
  for(let [start,adj] of graph){if(adj.length!==2)throw Error("Nonmanifold contour");if(seen.has(start))continue;let c=start,prev=null,p=[];
   do{if(seen.has(c))throw Error("Crossing");seen.add(c);p.push(points.get(c));let n=graph.get(c).find(k=>k!==prev);prev=c;c=n}while(c!==start);
-  if(p.length<3||Math.abs(area(p))<4){removed.push(Math.abs(area(p)));continue}loops.push(p)
+  if(p.length<3||Math.abs(area(p))<8){removed.push(Math.abs(area(p)));continue}loops.push(p)
  }
  const oriented=loops.map(p=>{let hole=loops.filter(q=>q!==p&&contains(p[0],q)).length%2;return (area(p)>0)===!hole?p:p.slice().reverse()});
  if(oriented.filter(p=>area(p)>0).length!==OUTER[id-1]||oriented.filter(p=>area(p)<0).length!==HOLES[id-1])throw Error("Unexpected real topology "+NAMES[id-1]+" "+JSON.stringify(oriented.map(area)));
@@ -51,6 +51,20 @@ function fitClosed(p,tol){
   if(a.length<2)continue;let t0=sharp.has(i)?unit(minus(nearby(q,i,1,2),q[i])):tangent(i),t1=sharp.has(j)?unit(minus(nearby(q,j,-1,2),q[j])):scale(tangent(j),-1);seg.push(...fit(a,t0,t1))}
  return seg.map((s,i)=>[seg[(i+seg.length-1)%seg.length][2],s[0],s[1]]);
 }
+function fitClosedSafe(p,tol){
+ const N=p.length;let j=1;for(let i=2;i<N;i++)if(dist(p[i],p[0])>dist(p[j],p[0]))j=i;
+ function lineDistance(p,a,b){const v=minus(b,a),q=dot(v,v);return dist(p,plus(a,scale(v,q?Math.max(0,Math.min(1,dot(minus(p,a),v)/q)):0)))}
+ function rdp(idx){if(idx.length<=2)return idx;let v=0,k=1;for(let i=1;i<idx.length-1;i++){let e=lineDistance(p[idx[i]],p[idx[0]],p[idx[idx.length-1]]);if(e>v){v=e;k=i}}if(v<=tol)return [idx[0],idx[idx.length-1]];return [...rdp(idx.slice(0,k+1)).slice(0,-1),...rdp(idx.slice(k))]}
+ let ids=[...rdp(Array.from({length:j+1},(_,i)=>i)).slice(0,-1),...rdp([...Array.from({length:N-j},(_,i)=>i+j),0]).slice(0,-1)];
+ if(ids.length<3)throw Error('Degenerate loop');
+ const q=ids.map(i=>{let b=p[i],a=nearby(p,i,-1,2.0),c=nearby(p,i,1,2.0),u=unit(minus(b,a)),v=unit(minus(c,b));if(dot(u,v)<.86)return b;let t=unit(minus(c,a)),off=minus(plus(a,scale(t,dot(minus(b,a),t))),b);return plus(b,scale(off,Math.min(.35,.20/Math.max(norm(off),1e-9))))});
+ return q.map((b,i)=>{
+  let a=q[(i-1+q.length)%q.length],c=q[(i+1)%q.length],u=unit(minus(b,a)),v=unit(minus(c,b)),li=dist(a,b),ri=dist(b,c),t=unit(minus(nearby(p,ids[i],1,3.5),nearby(p,ids[i],-1,3.5)));
+  let smooth=dot(u,v)>.82&&dot(t,u)>.82&&dot(t,v)>.82;
+  function handle(d,L){let T=smooth?t:d,lat=Math.abs(T[0]*d[1]-T[1]*d[0]),h=Math.min(L/3,.18/Math.max(lat,1e-9));return scale(T,h)}
+  return [minus(b,handle(u,li)),b,plus(b,handle(v,ri))];
+ });
+}
 function sample(c){let p=[];for(let i=0;i<c.length;i++){let [,a,b]=c[i],[d,e]=c[(i+1)%c.length],n=Math.max(8,Math.ceil((dist(a,b)+dist(b,d)+dist(d,e))/.4));for(let j=0;j<n;j++){let t=j/n,u=1-t;p.push(plus(plus(scale(a,u*u*u),scale(b,3*u*u*t)),plus(scale(d,3*u*t*t),scale(e,t*t*t))))}}return p}
 function crossings(loops){
  let bins=new Map();const orient=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
@@ -66,8 +80,8 @@ function reconstructSubpixel(image,mask){
  for(let id=1;id<=4;id++){
   let {loops,removed}=alphaContours(W,H,raw,mask,id),attempts=[],best=null;
   for(let tol of [.50,.35,.24,.16,.10]){
-   let curves=loops.map(p=>fitClosed(p,tol)),polys=curves.map(sample),topology=polys.every((q,j)=>Math.sign(area(q))===Math.sign(area(loops[j]))&&Math.abs(area(q)-area(loops[j]))/Math.abs(area(loops[j]))<.018)&&!crossings(polys);
-   let check={tolerance:tol,knots:curves.reduce((n,p)=>n+p.length,0),topology,...parity(polys,W,H,mask,id)};attempts.push(check);
+   let curves=loops.map(p=>fitClosedSafe(p,tol)),polys=curves.map(sample),topology=polys.every((q,j)=>Math.sign(area(q))===Math.sign(area(loops[j]))&&Math.abs(area(q)-area(loops[j]))/Math.abs(area(loops[j]))<.018)&&!crossings(polys);
+   let check={tolerance:tol,knots:curves.reduce((n,p)=>n+p.length,0),topology,crossing:crossings(polys),maxLoopAreaError:Math.max(...polys.map((q,j)=>Math.abs(area(q)-area(loops[j]))/Math.abs(area(loops[j])))),...parity(polys,W,H,mask,id)};attempts.push(check);
    if(topology&&check.iou>=.992){best={curves,check};break}
   }
   if(!best)throw Error("No acceptable fitted curve for "+NAMES[id-1]+" "+JSON.stringify(attempts));
