@@ -84,8 +84,8 @@ function reconstructSubpixel(image,mask){
    let check={tolerance:tol,knots:curves.reduce((n,p)=>n+p.length,0),topology,crossing:crossings(polys),maxLoopAreaError:Math.max(...polys.map((q,j)=>Math.abs(area(q)-area(loops[j]))/Math.abs(area(loops[j])))),...parity(polys,W,H,mask,id)};attempts.push(check);
    if(topology&&check.iou>=.992){best={curves,check};break}
   }
-  if(!best)throw Error("No acceptable fitted curve for "+NAMES[id-1]+" "+JSON.stringify(attempts));
-  groups.push({name:NAMES[id-1],outer:OUTER[id-1],holes:HOLES[id-1],removedSubpixelAreas:removed,sourceVertices:loops.reduce((a,p)=>a+p.length,0),...best,attempts});
+  if(!best){groups.push({name:NAMES[id-1],candidateStatus:"RETAIN_VERIFIED_BASELINE",outer:OUTER[id-1],holes:HOLES[id-1],removedSubpixelAreas:removed,attempts});continue}
+  groups.push({name:NAMES[id-1],candidateStatus:"RASTER_PARITY_ONLY",outer:OUTER[id-1],holes:HOLES[id-1],removedSubpixelAreas:removed,sourceVertices:loops.reduce((a,p)=>a+p.length,0),...best,attempts});
  }
  return {version:1,width:W,height:H,method:"alpha-isocontour-127.5; corner-aware adaptive cubic fit; source-raster parity and strict crossing check",groups,nativeFillVerified:false,creativeApproval:false};
 }
